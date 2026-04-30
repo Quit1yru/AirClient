@@ -1,0 +1,16 @@
+[
+  {
+    "modid": "D1ckBounce",
+    "name": "D1ckBounce",
+    "description": "super D1ckBounce Client",
+    "version": "${version}",
+    "mcversion": "1.8.9",
+    "url": "https://liquidbounce.net",
+    "updateUrl": "",
+    "authorList": ["CCBlueX","LMX"],
+    "credits": "",
+    "logoFile": "",
+    "screenshots": [],
+    "dependencies": []
+  }
+]
