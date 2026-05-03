@@ -103,7 +103,7 @@ class ModuleElement(val module: Module): MinecraftInstance() {
             Fonts.fontSemibold35.drawString(module.description, x + 20F, y + height / 2F + 4F, 10526880L.toInt())
         }
 
-        val keyName = if (listeningToKey) "Listening" else Keyboard.getKeyName(module.keyBind)
+        val keyName = if (listeningToKey) "Listening" else (Keyboard.getKeyName(module.keyBind) ?: "None")
 
         val nameWidth: Float = if (useMinecraftFont) mc.fontRendererObj.getStringWidth(module.name).toFloat() else Fonts.font40.getStringWidth(module.name).toFloat()
         val keyNameWidth: Float = if (useMinecraftFont) mc.fontRendererObj.getStringWidth(keyName).toFloat() else Fonts.font24.getStringWidth(keyName).toFloat()
@@ -162,16 +162,16 @@ class ModuleElement(val module: Module): MinecraftInstance() {
             resetState()
             return
         }
-        val keyName = if (listeningToKey) "Listening" else Keyboard.getKeyName(module.keyBind)
+        val keyName = if (listeningToKey) "Listening" else (Keyboard.getKeyName(module.keyBind) ?: "None")
         val useMinecraftFont = NewGUI.fontMode == "Minecraft"
         val nameWidth: Float = if (useMinecraftFont) mc.fontRendererObj.getStringWidth(module.name).toFloat() else Fonts.font40.getStringWidth(module.name).toFloat()
         val keyNameWidth: Float = if (useMinecraftFont) mc.fontRendererObj.getStringWidth(keyName).toFloat() else Fonts.font24.getStringWidth(keyName).toFloat()
         
         if (MouseUtils.mouseWithinBounds(mouseX, mouseY, 
                 x + 25F + nameWidth,
-                y + height / 2F - Fonts.font40.FONT_HEIGHT + 2F,
+                y + height / 2F - 10F,
                 x + 35F + nameWidth + keyNameWidth,
-                y + height / 2F)) {
+                y + height / 2F + 10F)) {
             listeningToKey = true
             return
         }

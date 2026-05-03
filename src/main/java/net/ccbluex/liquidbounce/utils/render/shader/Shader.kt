@@ -15,6 +15,7 @@ import org.lwjgl.opengl.GL20.glUseProgram
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
+import net.minecraft.util.ResourceLocation
 
 abstract class Shader : MinecraftInstance {
     var programId = 0
@@ -31,7 +32,7 @@ abstract class Shader : MinecraftInstance {
             vertexShaderID = createShader(IOUtils.toString(vertexStream), ARBVertexShader.GL_VERTEX_SHADER_ARB)
             IOUtils.closeQuietly(vertexStream)
             
-            val fragmentStream = javaClass.getResourceAsStream("/assets/minecraft/airclient/shader/fragment/$fragmentShader")
+            val fragmentStream = javaClass.getResourceAsStream("/assets/minecraft/airclient/shader/$fragmentShader")
             fragmentShaderID = createShader(IOUtils.toString(fragmentStream), ARBFragmentShader.GL_FRAGMENT_SHADER_ARB)
             IOUtils.closeQuietly(fragmentStream)
         } catch (e: Exception) {
@@ -86,8 +87,44 @@ abstract class Shader : MinecraftInstance {
         LOGGER.info("[Shader] Successfully loaded: " + fragmentShader.name)
     }
 
+    @Throws(IOException::class)
+    constructor(fragmentShader: ResourceLocation) {
+        val vertexShaderID: Int
+        val fragmentShaderID: Int
+        
+        try {
+            val vertexStream = javaClass.getResourceAsStream("/assets/minecraft/airclient/shader/vertex.vert")
+            vertexShaderID = createShader(IOUtils.toString(vertexStream), ARBVertexShader.GL_VERTEX_SHADER_ARB)
+            IOUtils.closeQuietly(vertexStream)
+            
+            val fragmentStream = mc.resourceManager.getResource(fragmentShader).inputStream
+            fragmentShaderID = createShader(IOUtils.toString(fragmentStream), ARBFragmentShader.GL_FRAGMENT_SHADER_ARB)
+            IOUtils.closeQuietly(fragmentStream)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return
+        }
+        
+        if (vertexShaderID == 0 || fragmentShaderID == 0)
+            return
+        
+        programId = glCreateProgramObjectARB()
+        
+        if (programId == 0)
+            return
+        
+        glAttachObjectARB(programId, vertexShaderID)
+        glAttachObjectARB(programId, fragmentShaderID)
+        
+        glLinkProgramARB(programId)
+        glValidateProgramARB(programId)
+        
+        LOGGER.info("[Shader] Successfully loaded: ${fragmentShader.resourcePath}")
+    }
+
     open fun startShader() {
-        glPushMatrix()
+        if (programId == 0) return
+        
         glUseProgram(programId)
 
         if (uniformsMap.isEmpty())
@@ -97,8 +134,9 @@ abstract class Shader : MinecraftInstance {
     }
 
     open fun stopShader() {
+        if (programId == 0) return
+        
         glUseProgram(0)
-        glPopMatrix()
     }
 
     abstract fun setupUniforms()

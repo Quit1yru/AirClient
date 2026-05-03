@@ -9,6 +9,7 @@ import net.ccbluex.liquidbounce.event.*
 import net.ccbluex.liquidbounce.event.async.loopSequence
 import net.ccbluex.liquidbounce.features.module.Category
 import net.ccbluex.liquidbounce.features.module.Module
+import net.ccbluex.liquidbounce.features.module.modules.render.NoSwing
 import net.ccbluex.liquidbounce.utils.attack.CPSCounter
 import net.ccbluex.liquidbounce.utils.block.*
 import net.ccbluex.liquidbounce.utils.client.PacketUtils.sendPacket
@@ -71,6 +72,8 @@ object Scaffold : Module("Scaffold", Category.WORLD, Keyboard.KEY_I) {
     val scaffoldMode by choices(
         "ScaffoldMode", arrayOf("Normal", "Rewinside", "Expand", "Telly", "GodBridge"), "Normal"
     )
+
+    private val earlyRotation by boolean("EarlyRotation", false) { scaffoldMode == "GodBridge" }
 
     // Expand
     private val omniDirectionalExpand by boolean("OmniDirectionalExpand", false) { scaffoldMode == "Expand" }
@@ -289,6 +292,11 @@ object Scaffold : Module("Scaffold", Category.WORLD, Keyboard.KEY_I) {
 
         launchY = player.posY.roundToInt()
         blocksUntilAxisChange = 0
+        earlyRotationActive = false
+
+        if (earlyRotation && options.rotationsActive) {
+            earlyRotationActive = true
+        }
     }
 
     // Events
@@ -454,7 +462,14 @@ object Scaffold : Module("Scaffold", Category.WORLD, Keyboard.KEY_I) {
         }
 
         if (!Tower.isTowering && isGodBridgeEnabled && options.rotationsActive) {
-            generateGodBridgeRotations(ticks)
+            if (earlyRotationActive) {
+                generateGodBridgeRotations(ticks, skipEdgeCheck = true, skipMovementCheck = true)
+                if (player.isNearEdge(2.5f)) {
+                    earlyRotationActive = false
+                }
+            } else {
+                generateGodBridgeRotations(ticks)
+            }
 
             return@handler
         }
@@ -1075,8 +1090,15 @@ object Scaffold : Module("Scaffold", Category.WORLD, Keyboard.KEY_I) {
                 }
             }
 
-            if (swing) thePlayer.swingItem()
-            else sendPacket(C0APacketAnimation())
+            val noSwingActive = NoSwing.handleEvents()
+            val shouldRender = !noSwingActive || !NoSwing.clientSide
+            val shouldSendPacket = !noSwingActive || !NoSwing.serverSide
+
+            if (swing && shouldRender) {
+                thePlayer.swingItem()
+            } else if (shouldSendPacket) {
+                sendPacket(C0APacketAnimation())
+            }
 
             if (isManualJumpOptionActive) blocksPlacedUntilJump++
 
@@ -1085,7 +1107,11 @@ object Scaffold : Module("Scaffold", Category.WORLD, Keyboard.KEY_I) {
             if (stack.stackSize <= 0) {
                 thePlayer.inventory.mainInventory[SilentHotbar.currentSlot] = null
                 ForgeEventFactory.onPlayerDestroyItem(thePlayer, stack)
-            } else if (stack.stackSize != prevSize || mc.playerController.isInCreativeMode) mc.entityRenderer.itemRenderer.resetEquippedProgress()
+            } else if (stack.stackSize != prevSize || mc.playerController.isInCreativeMode) {
+                if (swing && !(NoSwing.handleEvents() && NoSwing.clientSide)) {
+                    mc.entityRenderer.itemRenderer.resetEquippedProgress()
+                }
+            }
 
             placeRotation = null
 
@@ -1093,7 +1119,11 @@ object Scaffold : Module("Scaffold", Category.WORLD, Keyboard.KEY_I) {
 
             onSuccess()
         } else {
-            if (thePlayer.sendUseItem(stack)) mc.entityRenderer.itemRenderer.resetEquippedProgress2()
+            if (thePlayer.sendUseItem(stack)) {
+                if (swing && !(NoSwing.handleEvents() && NoSwing.clientSide)) {
+                    mc.entityRenderer.itemRenderer.resetEquippedProgress2()
+                }
+            }
         }
 
         return clickedSuccessfully
@@ -1176,13 +1206,14 @@ object Scaffold : Module("Scaffold", Category.WORLD, Keyboard.KEY_I) {
     }
 
     private var isOnRightSide = false
+    private var earlyRotationActive = false
 
     /**
      * God-bridge rotation generation method from Nextgen
      *
      * Credits to @Ell1ott
      */
-    private fun generateGodBridgeRotations(ticks: Int) {
+    private fun generateGodBridgeRotations(ticks: Int, skipEdgeCheck: Boolean = false, skipMovementCheck: Boolean = false) {
         val player = mc.thePlayer ?: return
 
         val direction = if (options.applyServerSide) {
@@ -1197,9 +1228,9 @@ object Scaffold : Module("Scaffold", Category.WORLD, Keyboard.KEY_I) {
             movingYaw % 90 == 0f
         } else movingYaw in steps45 && player.movementInput.isSideways
 
-        if (!player.isNearEdge(2.5f)) return
+        if (!skipEdgeCheck && !player.isNearEdge(2.5f)) return
 
-        if (!player.isMoving) {
+        if (!skipMovementCheck && !player.isMoving) {
             placeRotation?.run {
                 val axisMovement = floor(this.rotation.yaw / 90) * 90
 

@@ -1,9 +1,9 @@
 [
   {
-    "modid": "D1ckBounce",
-    "name": "D1ckBounce",
-    "description": "Super D1ck Client",
-    "version": "b0.1",
+    "modid": "AirBounce",
+    "name": "AirClient",
+    "description": "Air Client",
+    "version": "1.0",
     "mcversion": "1.8.9",
     "url": "https://liquidbounce.net",
     "updateUrl": "",

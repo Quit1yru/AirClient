@@ -48,7 +48,7 @@ class Arraylist(
 ) : Element("Arraylist", x, y, scale, side) {
 
     private val textColorMode by choices(
-        "Text-Mode", arrayOf("Custom", "Fade", "Random", "Rainbow", "Gradient", "Theme"), "Custom"
+        "Text-Mode", arrayOf("Custom", "Fade", "Random", "Rainbow", "Gradient", "Theme"), "Theme"
     )
     private val textColors = ColorSettingsInteger(this, "TextColor") { textColorMode == "Custom" }.with(blueRibbon)
     private val textFadeColors = ColorSettingsInteger(this, "Text-Fade") { textColorMode == "Fade" }.with(0, 111, 255)
@@ -66,7 +66,7 @@ class Arraylist(
     private val rectMode by choices("Rect-Mode", arrayOf("None", "Left", "Right", "Outline"), "Right")
     private val roundedRectRadius by float("RoundedRect-Radius", 0F, 0F..2F) { rectMode !in setOf("None", "Outline") }
     private val rectColorMode by choices(
-        "Rect-ColorMode", arrayOf("Custom", "Fade", "Random", "Rainbow", "Gradient", "Theme"), "Custom"
+        "Rect-ColorMode", arrayOf("Custom", "Fade", "Random", "Rainbow", "Gradient", "Theme"), "Theme"
     ) { rectMode != "None" }
     private val rectColors =
         ColorSettingsInteger(this, "RectColor", applyMax = true) { isCustomRectSupported }.with(blueRibbon)
@@ -305,12 +305,12 @@ class Arraylist(
             val textSpacer = textHeight + space
 
             val rainbowOffset = System.currentTimeMillis() % 10000 / 10000F
-            val rainbowX = 1f safeDiv rainbowX
-            val rainbowY = 1f safeDiv rainbowY
+            val actualRainbowX = 1f safeDiv rainbowX
+            val actualRainbowY = 1f safeDiv rainbowY
 
             val gradientOffset = System.currentTimeMillis() % 10000 / 10000F
-            val gradientX = 1f safeDiv gradientX
-            val gradientY = 1f safeDiv gradientY
+            val actualGradientX = 1f safeDiv gradientX
+            val actualGradientY = 1f safeDiv gradientY
 
             modules.forEachIndexed { index, module ->
                 var yPos =
@@ -389,13 +389,13 @@ class Arraylist(
 
                         GradientShader.begin(
                             !markAsInactive && backgroundMode == "Gradient",
-                            gradientX,
-                            gradientY,
+                            actualGradientX,
+                            actualGradientY,
                             bgGradColors.toColorArray(maxBackgroundGradientColors),
                             gradientBackgroundSpeed,
                             gradientOffset
                         ).use {
-                            RainbowShader.begin(backgroundMode == "Rainbow", rainbowX, rainbowY, rainbowOffset).use {
+                            RainbowShader.begin(backgroundMode == "Rainbow", actualRainbowX, actualRainbowY, rainbowOffset).use {
                                 drawRoundedRect(
                                     xPos - if (rectMode == "Right") 5 else 2,
                                     yPos,
@@ -421,14 +421,14 @@ class Arraylist(
 
                         GradientFontShader.begin(
                             !markAsInactive && textColorMode == "Gradient",
-                            gradientX,
-                            gradientY,
+                            actualGradientX,
+                            actualGradientY,
                             textGradColors.toColorArray(maxTextGradientColors),
                             gradientTextSpeed,
                             gradientOffset
                         ).use {
                             RainbowFontShader.begin(
-                                !markAsInactive && textColorMode == "Rainbow", rainbowX, rainbowY, rainbowOffset
+                                !markAsInactive && textColorMode == "Rainbow", actualRainbowX, actualRainbowY, rainbowOffset
                             ).use {
                                 font.drawString(
                                     moduleName,
@@ -451,14 +451,14 @@ class Arraylist(
                         if (moduleTag.isNotEmpty()) {
                             GradientFontShader.begin(
                                 !markAsInactive && tagsColorMode == "Gradient",
-                                gradientX,
-                                gradientY,
+                                actualGradientX,
+                                actualGradientY,
                                 tagsGradColors.toColorArray(maxTagsGradientColors),
                                 gradientTagsSpeed,
                                 gradientOffset
                             ).use {
                                 RainbowFontShader.begin(
-                                    !markAsInactive && tagsColorMode == "Rainbow", rainbowX, rainbowY, rainbowOffset
+                                    !markAsInactive && tagsColorMode == "Rainbow", actualRainbowX, actualRainbowY, rainbowOffset
                                 ).use {
                                     font.drawString(
                                         moduleTag,
@@ -481,15 +481,15 @@ class Arraylist(
 
                         GradientShader.begin(
                             !markAsInactive && isCustomRectGradientSupported,
-                            gradientX,
-                            gradientY,
+                            actualGradientX,
+                            actualGradientY,
                             rectGradColors.toColorArray(maxRectGradientColors),
                             gradientRectSpeed,
                             gradientOffset
                         ).use {
                             if (rectMode != "None") {
                                 RainbowShader.begin(
-                                    !markAsInactive && rectColorMode == "Rainbow", rainbowX, rainbowY, rainbowOffset
+                                    !markAsInactive && rectColorMode == "Rainbow", actualRainbowX, actualRainbowY, rainbowOffset
                                 ).use {
                                     val rectColor = if (markAsInactive) inactiveColor
                                     else when (rectColorMode) {
@@ -595,13 +595,13 @@ class Arraylist(
 
                         GradientShader.begin(
                             !markAsInactive && backgroundMode == "Gradient",
-                            gradientX,
-                            gradientY,
+                            actualGradientX,
+                            actualGradientY,
                             bgGradColors.toColorArray(maxBackgroundGradientColors),
                             gradientBackgroundSpeed,
                             gradientOffset
                         ).use {
-                            RainbowShader.begin(backgroundMode == "Rainbow", rainbowX, rainbowY, rainbowOffset).use {
+                            RainbowShader.begin(backgroundMode == "Rainbow", actualRainbowX, actualRainbowY, rainbowOffset).use {
                                 drawRoundedRect(
                                     if (rectMode == "Left") 1f else 0f,
                                     yPos,
@@ -627,14 +627,14 @@ class Arraylist(
 
                         GradientFontShader.begin(
                             !markAsInactive && textColorMode == "Gradient",
-                            gradientX,
-                            gradientY,
+                            actualGradientX,
+                            actualGradientY,
                             textGradColors.toColorArray(maxTextGradientColors),
                             gradientTextSpeed,
                             gradientOffset
                         ).use {
                             RainbowFontShader.begin(
-                                !markAsInactive && textColorMode == "Rainbow", rainbowX, rainbowY, rainbowOffset
+                                !markAsInactive && textColorMode == "Rainbow", actualRainbowX, actualRainbowY, rainbowOffset
                             ).use {
                                 font.drawString(
                                     moduleName, xPos - 1, yPos + textY, if (markAsInactive) inactiveColor
@@ -652,14 +652,14 @@ class Arraylist(
                         if (moduleTag.isNotEmpty()) {
                             GradientFontShader.begin(
                                 !markAsInactive && tagsColorMode == "Gradient",
-                                gradientX,
-                                gradientY,
+                                actualGradientX,
+                                actualGradientY,
                                 tagsGradColors.toColorArray(maxTagsGradientColors),
                                 gradientTagsSpeed,
                                 gradientOffset
                             ).use {
                                 RainbowFontShader.begin(
-                                    !markAsInactive && tagsColorMode == "Rainbow", rainbowX, rainbowY, rainbowOffset
+                                    !markAsInactive && tagsColorMode == "Rainbow", actualRainbowX, actualRainbowY, rainbowOffset
                                 ).use {
                                     font.drawString(
                                         moduleTag,
@@ -681,15 +681,15 @@ class Arraylist(
 
                         GradientShader.begin(
                             !markAsInactive && isCustomRectGradientSupported,
-                            gradientX,
-                            gradientY,
+                            actualGradientX,
+                            actualGradientY,
                             rectGradColors.toColorArray(maxRectGradientColors),
                             gradientRectSpeed,
                             gradientOffset
                         ).use {
                             if (rectMode != "None") {
                                 RainbowShader.begin(
-                                    !markAsInactive && rectColorMode == "Rainbow", rainbowX, rainbowY, rainbowOffset
+                                    !markAsInactive && rectColorMode == "Rainbow", actualRainbowX, actualRainbowY, rainbowOffset
                                 ).use {
                                     val rectColor = if (markAsInactive) inactiveColor
                                     else when (rectColorMode) {

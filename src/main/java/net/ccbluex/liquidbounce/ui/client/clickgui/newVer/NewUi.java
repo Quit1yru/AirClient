@@ -76,7 +76,7 @@ public class NewUi extends GuiScreen {
 
         // left sidebar
         RenderUtils.INSTANCE.drawRoundedRect(panelX + 5, panelY + 5, panelX + 195, panelY + panelHeight - 5, ColorManager.INSTANCE.getDropDown().getRGB(), 5f, RenderUtils.RoundedCorners.ALL);
-        float categoryY = panelY + 25 + scrollAmt;
+        float categoryY = panelY + 50 + scrollAmt;
 
         for (CategoryElement c : categoryElements) {
             c.drawLabel(mouseX, mouseY, panelX, categoryY, 200, 35);
@@ -99,7 +99,7 @@ public class NewUi extends GuiScreen {
         }
 
         // title bar
-        Fonts.INSTANCE.getFontSF35().drawString("D1ckBounce", panelX + 20, panelY + 10, Color.WHITE.getRGB());
+        Fonts.INSTANCE.getFontSF35().drawString("AirClient", panelX + 20, panelY + 10, Color.WHITE.getRGB());
 
         // right sidebar top
         Fonts.INSTANCE.getFont35().drawString("ClickGUI", panelX + 210, panelY + 15, Color.WHITE.getRGB());
@@ -112,7 +112,7 @@ public class NewUi extends GuiScreen {
         final float panelHeight = sr.getScaledHeight() - 40;
         final float panelX = 30;
         final float panelY = 30;
-        float categoryY = panelY + 25 + scrollAmt;
+        float categoryY = panelY + 50 + scrollAmt;
 
         for (CategoryElement c : categoryElements) {
             if (mouseX >= panelX && mouseX <= panelX + 200 && mouseY >= categoryY && mouseY <= categoryY + 35) {
@@ -230,7 +230,7 @@ public class NewUi extends GuiScreen {
 
     private int getScrollHeight(ScaledResolution sr) {
         int baseHeight = sr.getScaledHeight() - 40 - 30;
-        int categoryHeight = 37 * categoryElements.size() + 25;
+        int categoryHeight = 37 * categoryElements.size() + 50;
         return Math.max(0, categoryHeight - baseHeight);
     }
 

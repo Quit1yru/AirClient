@@ -5,12 +5,11 @@
 package net.ccbluex.liquidbounce.ui.font
 
 import com.google.gson.JsonObject
-import net.ccbluex.liquidbounce.LiquidBounce.CLIENT_CLOUD
 import net.ccbluex.liquidbounce.file.FileManager.fontsDir
 import net.ccbluex.liquidbounce.utils.client.ClientUtils.LOGGER
 import net.ccbluex.liquidbounce.utils.client.MinecraftInstance
-import net.ccbluex.liquidbounce.utils.io.*
-import net.ccbluex.liquidbounce.utils.io.Downloader
+import net.ccbluex.liquidbounce.utils.io.readJson
+import net.ccbluex.liquidbounce.utils.io.writeJson
 import net.minecraft.client.gui.FontRenderer
 import java.awt.Font
 import java.io.File
@@ -110,7 +109,9 @@ object Fonts : MinecraftInstance {
     }
 
     fun registerCustomAWTFont(customFontInfo: CustomFontInfo, save: Boolean = true): GameFontRenderer? {
-        val font = getFontFromFileOrNull(customFontInfo.fontFile, customFontInfo.fontSize) ?: return null
+        val font = getFontFromResource(customFontInfo.fontFile, customFontInfo.fontSize)
+            ?: getFallbackFont(customFontInfo.fontSize)
+            ?: return null
 
         val result = register(
             FontInfo(customFontInfo.name, customFontInfo.fontSize, isCustom = true),
@@ -127,158 +128,156 @@ object Fonts : MinecraftInstance {
     fun loadFonts() {
         LOGGER.info("Start to load fonts.")
         val time = measureTimeMillis {
-            downloadFonts()
-
             register(minecraftFontInfo, minecraftFont)
 
             fontRegular30 = register(
                 FontInfo(name = "HarmonyOS Sans SC Regular", size = 30),
-                (getFontFromResource("HarmonyOS_Sans_SC_Regular.ttf", 30) ?: getFontFromFile("Outfit-Regular.ttf", 30)).asGameFontRenderer()
+                getFontOrDefault("HarmonyOS_Sans_SC_Regular.ttf", 30).asGameFontRenderer()
             )
 
             fontSemibold35 = register(
                 FontInfo(name = "HarmonyOS Sans SC Medium", size = 35),
-                (getFontFromResource("HarmonyOS_Sans_SC_Medium.ttf", 35) ?: getFontFromFile("Outfit-Semibold.ttf", 35)).asGameFontRenderer()
+                getFontOrDefault("HarmonyOS_Sans_SC_Medium.ttf", 35).asGameFontRenderer()
             )
 
             fontRegular35 = register(
                 FontInfo(name = "HarmonyOS Sans SC Regular", size = 35),
-                (getFontFromResource("HarmonyOS_Sans_SC_Regular.ttf", 35) ?: getFontFromFile("Outfit-Regular.ttf", 35)).asGameFontRenderer()
+                getFontOrDefault("HarmonyOS_Sans_SC_Regular.ttf", 35).asGameFontRenderer()
             )
 
             fontRegular40 = register(
                 FontInfo(name = "HarmonyOS Sans SC Regular", size = 40),
-                (getFontFromResource("HarmonyOS_Sans_SC_Regular.ttf", 40) ?: getFontFromFile("Outfit-Regular.ttf", 40)).asGameFontRenderer()
+                getFontOrDefault("HarmonyOS_Sans_SC_Regular.ttf", 40).asGameFontRenderer()
             )
 
             fontSemibold40 = register(
                 FontInfo(name = "HarmonyOS Sans SC Medium", size = 40),
-                (getFontFromResource("HarmonyOS_Sans_SC_Medium.ttf", 40) ?: getFontFromFile("Outfit-Semibold.ttf", 40)).asGameFontRenderer()
+                getFontOrDefault("HarmonyOS_Sans_SC_Medium.ttf", 40).asGameFontRenderer()
             )
 
             fontRegular45 = register(
                 FontInfo(name = "HarmonyOS Sans SC Regular", size = 45),
-                (getFontFromResource("HarmonyOS_Sans_SC_Regular.ttf", 45) ?: getFontFromFile("Outfit-Regular.ttf", 45)).asGameFontRenderer()
+                getFontOrDefault("HarmonyOS_Sans_SC_Regular.ttf", 45).asGameFontRenderer()
             )
 
             fontExtraBold35 = register(
                 FontInfo(name = "HarmonyOS Sans SC Black", size = 35),
-                (getFontFromResource("HarmonyOS_Sans_SC_Black.ttf", 35) ?: getFontFromResource("HarmonyOS_Sans_SC_Medium.ttf", 35) ?: getFontFromFile("Outfit-Extrabold.ttf", 35)).asGameFontRenderer()
+                getFontOrDefault("HarmonyOS_Sans_SC_Medium.ttf", 35).asGameFontRenderer()
             )
 
             fontExtraBold40 = register(
                 FontInfo(name = "HarmonyOS Sans SC Black", size = 40),
-                (getFontFromResource("HarmonyOS_Sans_SC_Black.ttf", 40) ?: getFontFromResource("HarmonyOS_Sans_SC_Medium.ttf", 40) ?: getFontFromFile("Outfit-Extrabold.ttf", 40)).asGameFontRenderer()
+                getFontOrDefault("HarmonyOS_Sans_SC_Medium.ttf", 40).asGameFontRenderer()
             )
 
             fontBold180 = register(
                 FontInfo(name = "HarmonyOS Sans SC Bold", size = 180),
-                (getFontFromResource("HarmonyOS_Sans_SC_Bold.ttf", 180) ?: getFontFromResource("HarmonyOS_Sans_SC_Medium.ttf", 180) ?: getFontFromFile("Outfit-Bold.ttf", 180)).asGameFontRenderer()
+                getFontOrDefault("HarmonyOS_Sans_SC_Medium.ttf", 180).asGameFontRenderer()
             )
 
             fontNeutonBold35 = register(
                 FontInfo(name = "Neuton Bold", size = 35),
-                (getFontFromResource("Neuton-Bold.ttf", 35) ?: getFontFromFile("Outfit-Bold.ttf", 35)).asGameFontRenderer()
+                getFontOrDefault("Neuton-Bold.ttf", 35).asGameFontRenderer()
             )
 
             fontNeutonBold40 = register(
                 FontInfo(name = "Neuton Bold", size = 40),
-                (getFontFromResource("Neuton-Bold.ttf", 40) ?: getFontFromFile("Outfit-Bold.ttf", 40)).asGameFontRenderer()
+                getFontOrDefault("Neuton-Bold.ttf", 40).asGameFontRenderer()
             )
 
             fontNeutonBold50 = register(
                 FontInfo(name = "Neuton Bold", size = 50),
-                (getFontFromResource("Neuton-Bold.ttf", 50) ?: getFontFromFile("Outfit-Bold.ttf", 50)).asGameFontRenderer()
+                getFontOrDefault("Neuton-Bold.ttf", 50).asGameFontRenderer()
             )
 
             fontNeutonExtraBold35 = register(
                 FontInfo(name = "Neuton ExtraBold", size = 35),
-                (getFontFromResource("Neuton-ExtraBold.ttf", 35) ?: getFontFromFile("Outfit-Extrabold.ttf", 35)).asGameFontRenderer()
+                getFontOrDefault("Neuton-ExtraBold.ttf", 35).asGameFontRenderer()
             )
 
             fontNeutonExtraBold40 = register(
                 FontInfo(name = "Neuton ExtraBold", size = 40),
-                (getFontFromResource("Neuton-ExtraBold.ttf", 40) ?: getFontFromFile("Outfit-Extrabold.ttf", 40)).asGameFontRenderer()
+                getFontOrDefault("Neuton-ExtraBold.ttf", 40).asGameFontRenderer()
             )
 
             fontNeutonExtraBold50 = register(
                 FontInfo(name = "Neuton ExtraBold", size = 50),
-                (getFontFromResource("Neuton-ExtraBold.ttf", 50) ?: getFontFromFile("Outfit-Extrabold.ttf", 50)).asGameFontRenderer()
+                getFontOrDefault("Neuton-ExtraBold.ttf", 50).asGameFontRenderer()
             )
 
             fontNeutonExtraLight35 = register(
                 FontInfo(name = "Neuton ExtraLight", size = 35),
-                (getFontFromResource("Neuton-ExtraLight.ttf", 35) ?: getFontFromFile("Outfit-Regular.ttf", 35)).asGameFontRenderer()
+                getFontOrDefault("Neuton-ExtraLight.ttf", 35).asGameFontRenderer()
             )
 
             fontNeutonExtraLight40 = register(
                 FontInfo(name = "Neuton ExtraLight", size = 40),
-                (getFontFromResource("Neuton-ExtraLight.ttf", 40) ?: getFontFromFile("Outfit-Regular.ttf", 40)).asGameFontRenderer()
+                getFontOrDefault("Neuton-ExtraLight.ttf", 40).asGameFontRenderer()
             )
 
             fontNeutonItalic35 = register(
                 FontInfo(name = "Neuton Italic", size = 35),
-                (getFontFromResource("Neuton-Italic.ttf", 35) ?: getFontFromFile("Outfit-Regular.ttf", 35)).asGameFontRenderer()
+                getFontOrDefault("Neuton-Italic.ttf", 35).asGameFontRenderer()
             )
 
             fontNeutonItalic40 = register(
                 FontInfo(name = "Neuton Italic", size = 40),
-                (getFontFromResource("Neuton-Italic.ttf", 40) ?: getFontFromFile("Outfit-Regular.ttf", 40)).asGameFontRenderer()
+                getFontOrDefault("Neuton-Italic.ttf", 40).asGameFontRenderer()
             )
 
             fontNeutonLight35 = register(
                 FontInfo(name = "Neuton Light", size = 35),
-                (getFontFromResource("Neuton-Light.ttf", 35) ?: getFontFromFile("Outfit-Regular.ttf", 35)).asGameFontRenderer()
+                getFontOrDefault("Neuton-Light.ttf", 35).asGameFontRenderer()
             )
 
             fontNeutonLight40 = register(
                 FontInfo(name = "Neuton Light", size = 40),
-                (getFontFromResource("Neuton-Light.ttf", 40) ?: getFontFromFile("Outfit-Regular.ttf", 40)).asGameFontRenderer()
+                getFontOrDefault("Neuton-Light.ttf", 40).asGameFontRenderer()
             )
 
             fontNeutonRegular35 = register(
                 FontInfo(name = "Neuton Regular", size = 35),
-                (getFontFromResource("Neuton-Regular.ttf", 35) ?: getFontFromFile("Outfit-Regular.ttf", 35)).asGameFontRenderer()
+                getFontOrDefault("Neuton-Regular.ttf", 35).asGameFontRenderer()
             )
 
             fontNeutonRegular40 = register(
                 FontInfo(name = "Neuton Regular", size = 40),
-                (getFontFromResource("Neuton-Regular.ttf", 40) ?: getFontFromFile("Outfit-Regular.ttf", 40)).asGameFontRenderer()
+                getFontOrDefault("Neuton-Regular.ttf", 40).asGameFontRenderer()
             )
 
             fontNeutonRegular50 = register(
                 FontInfo(name = "Neuton Regular", size = 50),
-                (getFontFromResource("Neuton-Regular.ttf", 50) ?: getFontFromFile("Outfit-Regular.ttf", 50)).asGameFontRenderer()
+                getFontOrDefault("Neuton-Regular.ttf", 50).asGameFontRenderer()
             )
 
             fontNosifer35 = register(
                 FontInfo(name = "Nosifer", size = 35),
-                (getFontFromResource("Nosifer-Regular.ttf", 35) ?: getFontFromFile("Outfit-Bold.ttf", 35)).asGameFontRenderer()
+                getFontOrDefault("Nosifer-Regular.ttf", 35).asGameFontRenderer()
             )
 
             fontNosifer40 = register(
                 FontInfo(name = "Nosifer", size = 40),
-                (getFontFromResource("Nosifer-Regular.ttf", 40) ?: getFontFromFile("Outfit-Bold.ttf", 40)).asGameFontRenderer()
+                getFontOrDefault("Nosifer-Regular.ttf", 40).asGameFontRenderer()
             )
 
             fontNosifer50 = register(
                 FontInfo(name = "Nosifer", size = 50),
-                (getFontFromResource("Nosifer-Regular.ttf", 50) ?: getFontFromFile("Outfit-Bold.ttf", 50)).asGameFontRenderer()
+                getFontOrDefault("Nosifer-Regular.ttf", 50).asGameFontRenderer()
             )
 
             fontZenDots35 = register(
                 FontInfo(name = "Zen Dots", size = 35),
-                (getFontFromResource("ZenDots-Regular.ttf", 35) ?: getFontFromFile("Outfit-Regular.ttf", 35)).asGameFontRenderer()
+                getFontOrDefault("ZenDots-Regular.ttf", 35).asGameFontRenderer()
             )
 
             fontZenDots40 = register(
                 FontInfo(name = "Zen Dots", size = 40),
-                (getFontFromResource("ZenDots-Regular.ttf", 40) ?: getFontFromFile("Outfit-Regular.ttf", 40)).asGameFontRenderer()
+                getFontOrDefault("ZenDots-Regular.ttf", 40).asGameFontRenderer()
             )
 
             fontZenDots50 = register(
                 FontInfo(name = "Zen Dots", size = 50),
-                (getFontFromResource("ZenDots-Regular.ttf", 50) ?: getFontFromFile("Outfit-Regular.ttf", 50)).asGameFontRenderer()
+                getFontOrDefault("ZenDots-Regular.ttf", 50).asGameFontRenderer()
             )
 
             loadCustomFonts()
@@ -291,17 +290,6 @@ object Fonts : MinecraftInstance {
 
         customFontInfoList.forEach {
             registerCustomAWTFont(it, save = false)
-        }
-    }
-
-    fun downloadFonts() {
-        fontsDir.mkdirs()
-        val outputFile = File(fontsDir, "outfit.zip")
-        if (!outputFile.exists()) {
-            LOGGER.info("Downloading fonts...")
-            Downloader.downloadWholeFile("$CLIENT_CLOUD/fonts/Outfit.zip", outputFile)
-            LOGGER.info("Extracting fonts...")
-            outputFile.extractZipTo(fontsDir)
         }
     }
 
@@ -334,15 +322,6 @@ object Fonts : MinecraftInstance {
         }
     }
 
-    private fun getFontFromFileOrNull(file: String, size: Int): Font? = try {
-        File(fontsDir, file).inputStream().use { inputStream ->
-            Font.createFont(Font.TRUETYPE_FONT, inputStream).deriveFont(Font.PLAIN, size.toFloat())
-        }
-    } catch (e: Exception) {
-        LOGGER.warn("Exception during loading font[name=${file}, size=${size}]", e)
-        null
-    }
-
     private fun getFontFromResource(file: String, size: Int): Font? {
         return try {
             val resourcePath = "/assets/minecraft/airclient/fonts/$file"
@@ -363,12 +342,7 @@ object Fonts : MinecraftInstance {
         }
     }
 
-    private fun getFontFromFile(file: String, size: Int): Font {
-        val fontFromFile = getFontFromFileOrNull(file, size)
-        if (fontFromFile != null) {
-            return fontFromFile
-        }
-        
+    private fun getFallbackFont(size: Int): Font {
         val fallbackFonts = listOf(
             "Microsoft YaHei",
             "SimHei",
@@ -378,7 +352,7 @@ object Fonts : MinecraftInstance {
             "WenQuanYi Micro Hei",
             "SansSerif"
         )
-        
+
         for (fallbackName in fallbackFonts) {
             try {
                 val fallbackFont = Font(fallbackName, Font.PLAIN, size)
@@ -390,9 +364,13 @@ object Fonts : MinecraftInstance {
                 LOGGER.warn("Failed to create fallback font: $fallbackName", e)
             }
         }
-        
+
         LOGGER.warn("No suitable fallback font found, using default SansSerif")
         return Font("SansSerif", Font.PLAIN, size)
+    }
+
+    private fun getFontOrDefault(file: String, size: Int): Font {
+        return getFontFromResource(file, size) ?: getFallbackFont(size)
     }
 
     private fun Font.asGameFontRenderer(): GameFontRenderer {

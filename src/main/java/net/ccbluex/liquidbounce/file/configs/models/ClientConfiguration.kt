@@ -11,11 +11,12 @@ object ClientConfiguration : Configurable("ClientConfiguration"), MinecraftInsta
     var customBackground by boolean("CustomBackground", false)
     var particles by boolean("Particles", false)
     var mainMenuStyle by text("MainMenuStyle", "Default")
+    var defaultMenuBackgroundIndex by int("DefaultMenuBackgroundIndex", 6, 0..11)
+    var customMenuBackgroundIndex by int("CustomMenuBackgroundIndex", 6, 0..11)
     var stylisedAlts by boolean("StylisedAlts", true)
     var unformattedAlts by boolean("CleanAlts", true)
     var altsLength by int("AltsLength", 16, 4..20)
     var altsPrefix by text("AltsPrefix", "")
-    // The game language can be overridden by the user. empty=default
     var overrideLanguage by text("OverrideLanguage","")
 
     fun updateClientWindow() {

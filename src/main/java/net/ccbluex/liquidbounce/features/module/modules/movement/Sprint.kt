@@ -26,7 +26,7 @@ object Sprint : Module("Sprint", Category.MOVEMENT, gameDetecting = false) {
         state = true
     }
 
-    val mode by choices("Mode", arrayOf("Legit", "Vanilla"), "Vanilla")
+    val mode by choices("Mode", arrayOf("Legit", "Vanilla"), "Legit")
 
     val onlyOnSprintPress by boolean("OnlyOnSprintPress", false)
     private val alwaysCorrect by boolean("AlwaysCorrectSprint", false)

@@ -260,13 +260,8 @@ public class ThemeSelector extends GuiScreen {
                 Color borderColor = theme.getMode().equalsIgnoreCase(net.ccbluex.liquidbounce.utils.client.ClientThemesUtils.INSTANCE.getClientColorMode())
                     ? new Color(255, 255, 255, 255) : new Color(80, 80, 80, 100);
 
-                int gradientSteps = 20;
-                float stripeWidth = boxWidth / gradientSteps;
-                for (int i = 0; i < gradientSteps; i++) {
-                    Color gradientColor = getThemePreviewColor(theme.getMode(), i);
-                    float stripeX = boxX + i * stripeWidth;
-                    RenderUtils.INSTANCE.drawRoundedRect(stripeX, boxY, stripeX + stripeWidth + 1, boxY + boxHeight, gradientColor.getRGB(), 5f, RenderUtils.RoundedCorners.ALL);
-                }
+                Color[] gradientColors = getThemePreviewColors(theme.getMode());
+                drawGradientRect(boxX, boxY, boxX + boxWidth, boxY + boxHeight, gradientColors[0].getRGB(), gradientColors[1].getRGB());
 
                 RenderUtils.INSTANCE.drawRoundedRect(boxX - 1, boxY - 1, boxX + boxWidth + 1, boxY + boxHeight + 1, borderColor.getRGB(), 6f, RenderUtils.RoundedCorners.ALL);
 
@@ -288,13 +283,45 @@ public class ThemeSelector extends GuiScreen {
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
-    private Color getThemePreviewColor(String mode, int index) {
+    private Color[] getThemePreviewColors(String mode) {
         try {
-            Color color = net.ccbluex.liquidbounce.utils.client.ClientThemesUtils.INSTANCE.getColorForMode(mode, index);
-            return color != null ? color : Color.GRAY;
+            kotlin.Pair<Color, Color> colorPair = net.ccbluex.liquidbounce.utils.client.ClientThemesUtils.INSTANCE.getThemeColorPair(mode);
+            if (colorPair != null) {
+                return new Color[] { colorPair.getFirst(), colorPair.getSecond() };
+            }
+            Color color = net.ccbluex.liquidbounce.utils.client.ClientThemesUtils.INSTANCE.getColorForMode(mode, 0);
+            return new Color[] { color, color };
         } catch (Exception e) {
-            return Color.GRAY;
+            return new Color[] { Color.GRAY, Color.GRAY };
         }
+    }
+
+    private void drawGradientRect(float left, float top, float right, float bottom, int startColor, int endColor) {
+        float f = (float)(startColor >> 24 & 255) / 255.0F;
+        float f1 = (float)(startColor >> 16 & 255) / 255.0F;
+        float f2 = (float)(startColor >> 8 & 255) / 255.0F;
+        float f3 = (float)(startColor & 255) / 255.0F;
+        float f4 = (float)(endColor >> 24 & 255) / 255.0F;
+        float f5 = (float)(endColor >> 16 & 255) / 255.0F;
+        float f6 = (float)(endColor >> 8 & 255) / 255.0F;
+        float f7 = (float)(endColor & 255) / 255.0F;
+        GlStateManager.disableTexture2D();
+        GlStateManager.enableBlend();
+        GlStateManager.disableAlpha();
+        GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
+        GlStateManager.shadeModel(7425);
+        net.minecraft.client.renderer.Tessellator tessellator = net.minecraft.client.renderer.Tessellator.getInstance();
+        net.minecraft.client.renderer.WorldRenderer worldrenderer = tessellator.getWorldRenderer();
+        worldrenderer.begin(7, net.minecraft.client.renderer.vertex.DefaultVertexFormats.POSITION_COLOR);
+        worldrenderer.pos(right, top, 0.0).color(f1, f2, f3, f).endVertex();
+        worldrenderer.pos(left, top, 0.0).color(f5, f6, f7, f4).endVertex();
+        worldrenderer.pos(left, bottom, 0.0).color(f5, f6, f7, f4).endVertex();
+        worldrenderer.pos(right, bottom, 0.0).color(f1, f2, f3, f).endVertex();
+        tessellator.draw();
+        GlStateManager.shadeModel(7424);
+        GlStateManager.disableBlend();
+        GlStateManager.enableAlpha();
+        GlStateManager.enableTexture2D();
     }
 
     @Override

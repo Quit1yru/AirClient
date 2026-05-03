@@ -20,6 +20,8 @@ import net.ccbluex.liquidbounce.utils.render.animation.Animation
 import net.ccbluex.liquidbounce.utils.render.animation.AnimationType
 import net.ccbluex.liquidbounce.utils.render.animation.AnimationUtil
 import net.ccbluex.liquidbounce.utils.ui.AbstractScreen
+import net.ccbluex.liquidbounce.utils.render.shader.Background
+import net.ccbluex.liquidbounce.utils.render.shader.BuiltinShaderBackground
 import net.minecraft.client.gui.GuiButton
 import net.minecraft.client.gui.GuiMultiplayer
 import net.minecraft.client.gui.GuiOptions
@@ -71,7 +73,8 @@ class CustomMainMenu : AbstractScreen() {
         width = sr.scaledWidth
         height = sr.scaledHeight
         
-        // Draw background image
+        drawDefaultBackground()
+        
         RenderUtils.drawImage(
             ResourceLocation("airclient/MCDOG.png"),
             0, 0, width, height
@@ -161,6 +164,25 @@ class CustomMainMenu : AbstractScreen() {
             buttonIncrement++
         }
         
+        val bgBtnX = 5
+        val bgBtnY = height - 50
+        val bgBtnWidth = 80
+        val bgBtnHeight = 20
+        val isHoveringBg = mouseX >= bgBtnX && mouseX <= bgBtnX + bgBtnWidth && 
+                           mouseY >= bgBtnY && mouseY <= bgBtnY + bgBtnHeight
+        val bgBtnColor = if (isHoveringBg) Color(60, 60, 60, 200) else Color(40, 40, 40, 200)
+        val bgTextColor = if (isHoveringBg) Color(200, 200, 200) else Color(150, 150, 150)
+        
+        RenderUtils.drawRoundedRectInt(bgBtnX, bgBtnY, bgBtnX + bgBtnWidth, bgBtnY + bgBtnHeight, bgBtnColor.rgb, 3f)
+        
+        val currentBgName = Background.BUILTIN_BACKGROUND_NAMES[ClientConfiguration.customMenuBackgroundIndex] ?: "Aurora"
+        Fonts.fontSemibold35.drawCenteredString(
+            currentBgName, 
+            bgBtnX + bgBtnWidth / 2f, 
+            bgBtnY + (bgBtnHeight - Fonts.fontSemibold35.FONT_HEIGHT) / 2f,
+            bgTextColor.rgb
+        )
+
         val switchBtnX = 5
         val switchBtnY = height - 25
         val switchBtnWidth = 80
@@ -185,6 +207,23 @@ class CustomMainMenu : AbstractScreen() {
         buttons.forEach { it.mouseClicked(mouseX, mouseY, mouseButton) }
         textButtons.forEach { it.mouseClicked(mouseX, mouseY, mouseButton) }
         
+        val bgBtnX = 5
+        val bgBtnY = height - 50
+        val bgBtnWidth = 80
+        val bgBtnHeight = 20
+        val isHoveringBg = mouseX >= bgBtnX && mouseX <= bgBtnX + bgBtnWidth && 
+                           mouseY >= bgBtnY && mouseY <= bgBtnY + bgBtnHeight
+        
+        if (isHoveringBg && mouseButton == 0 && timer.hasTimePassed(200)) {
+            val currentIndex = ClientConfiguration.customMenuBackgroundIndex
+            val newIndex = (currentIndex + 1) % Background.BUILTIN_BACKGROUNDS.size
+            ClientConfiguration.customMenuBackgroundIndex = newIndex
+            LiquidBounce.customMenuBackground = Background.fromBuiltin(newIndex)
+            FileManager.saveConfig(valuesConfig)
+            timer.reset()
+            return
+        }
+
         val switchBtnX = 5
         val switchBtnY = height - 25
         val switchBtnWidth = 80

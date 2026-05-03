@@ -24,7 +24,7 @@ object NewGUI : Module("NewGUI", Category.CLIENT, Keyboard.KEY_RSHIFT, canBeEnab
 
     val fastRenderValue by boolean("FastRender", false)
 
-    val fontMode by choices("Font", arrayOf("Minecraft", "HarmonyOS"), "Minecraft")
+    val fontMode by choices("Font", arrayOf("Minecraft", "HarmonyOS"), "HarmonyOS")
 
     val colorModeValue by choices("Color", arrayOf("Custom", "Fade"), "Custom")
 

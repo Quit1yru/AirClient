@@ -87,7 +87,7 @@ public abstract class MixinGuiScreen {
         disableFog();
 
         if (ClientConfiguration.INSTANCE.getCustomBackground()) {
-            final Background background = LiquidBounce.INSTANCE.getBackground();
+            final Background background = LiquidBounce.INSTANCE.getCurrentBackground();
 
             if (background == null) {
                 // Use default background shader

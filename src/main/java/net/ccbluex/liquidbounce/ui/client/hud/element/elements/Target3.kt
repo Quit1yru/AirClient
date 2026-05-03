@@ -264,8 +264,8 @@ class Target3 : Element("Target3"), Listenable {
                 ).rgb
 
                 val rainbowOffset = System.currentTimeMillis() % 10000 / 10000F
-                val rainbowX = 1f safeDiv rainbowX
-                val rainbowY = 1f safeDiv rainbowY
+                val actualRainbowX = 1f safeDiv rainbowX
+                val actualRainbowY = 1f safeDiv rainbowY
 
                 glPushMatrix()
 
@@ -314,7 +314,7 @@ class Target3 : Element("Target3"), Listenable {
                         glPopMatrix()
                     }
 
-                    RainbowShader.begin(backgroundMode == "Rainbow", rainbowX, rainbowY, rainbowOffset).use {
+                    RainbowShader.begin(backgroundMode == "Rainbow", actualRainbowX, actualRainbowY, rainbowOffset).use {
                         drawRoundedBorderRect(
                             0F,
                             0F,

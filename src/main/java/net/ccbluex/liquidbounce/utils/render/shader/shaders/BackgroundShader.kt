@@ -10,12 +10,16 @@ import org.lwjgl.opengl.Display
 import org.lwjgl.opengl.GL20.*
 import java.io.File
 import java.io.IOException
+import net.minecraft.util.ResourceLocation
 
 class BackgroundShader : Shader {
     constructor() : super("background.frag")
 
     @Throws(IOException::class)
     constructor(fragmentShader: File) : super(fragmentShader)
+
+    @Throws(IOException::class)
+    constructor(fragmentShader: ResourceLocation) : super(fragmentShader)
 
     companion object {
         val BACKGROUND_SHADER = BackgroundShader()

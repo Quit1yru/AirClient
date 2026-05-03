@@ -128,8 +128,8 @@ class Text(x: Double = 10.0, y: Double = 10.0, scale: Float = 1F, side: Side = S
 
     private var displayString by text("DisplayText", "")
 
-    private val textColorMode by choices("Text-ColorMode", arrayOf("Custom", "Rainbow", "Gradient", "Theme"), "Custom")
-    private val themeGradientMode by choices("Theme-GradientMode", arrayOf("Sync", "LeftToRight", "RightToLeft"), "Sync") { textColorMode == "Theme" || backgroundMode == "Theme" }
+    private val textColorMode by choices("Text-ColorMode", arrayOf("Custom", "Rainbow", "Gradient", "Theme"), "Theme")
+    private val themeGradientMode by choices("Theme-GradientMode", arrayOf("Sync", "LeftToRight", "RightToLeft"), "RightToLeft") { textColorMode == "Theme" || backgroundMode == "Theme" }
 
     private val colors = ColorSettingsInteger(this, "TextColor", applyMax = true) { textColorMode == "Custom" }
 
@@ -342,12 +342,12 @@ class Text(x: Double = 10.0, y: Double = 10.0, scale: Float = 1F, side: Side = S
                 val gradient = textColorMode == "Gradient"
 
                 val gradientOffset = System.currentTimeMillis() % 10000 / 10000F
-                val gradientX = if (gradientX == 0f) 0f else 1f / gradientX
-                val gradientY = if (gradientY == 0f) 0f else 1f / gradientY
+                val actualGradientX = if (gradientX == 0f) 0f else 1f / gradientX
+                val actualGradientY = if (gradientY == 0f) 0f else 1f / gradientY
 
                 val rainbowOffset = System.currentTimeMillis() % 10000 / 10000F
-                val rainbowX = if (rainbowX == 0f) 0f else 1f / rainbowX
-                val rainbowY = if (rainbowY == 0f) 0f else 1f / rainbowY
+                val actualRainbowX = if (rainbowX == 0f) 0f else 1f / rainbowX
+                val actualRainbowY = if (rainbowY == 0f) 0f else 1f / rainbowY
 
                 if (backgroundGlow) {
                     GlowUtils.drawGlow(
@@ -414,13 +414,13 @@ class Text(x: Double = 10.0, y: Double = 10.0, scale: Float = 1F, side: Side = S
 
                 GradientShader.begin(
                     backgroundMode == "Gradient" || bgThemeGradient,
-                    gradientX,
-                    gradientY,
+                    actualGradientX,
+                    actualGradientY,
                     bgThemeGradientColors,
                     actualBgGradientSpeed,
                     gradientOffset
                 ).use {
-                    RainbowShader.begin(backgroundMode == "Rainbow", rainbowX, rainbowY, rainbowOffset).use {
+                    RainbowShader.begin(backgroundMode == "Rainbow", actualRainbowX, actualRainbowY, rainbowOffset).use {
                         drawRoundedRect(
                             rectPos[0], rectPos[1], rectPos[2], rectPos[3],
                             when (backgroundMode) {
@@ -516,13 +516,13 @@ class Text(x: Double = 10.0, y: Double = 10.0, scale: Float = 1F, side: Side = S
 
                 GradientFontShader.begin(
                     gradient || themeGradient,
-                    gradientX,
-                    gradientY,
+                    actualGradientX,
+                    actualGradientY,
                     themeGradientColors,
                     actualTextGradientSpeed,
                     gradientOffset
                 ).use {
-                    RainbowFontShader.begin(rainbow, rainbowX, rainbowY, rainbowOffset).use {
+                    RainbowFontShader.begin(rainbow, actualRainbowX, actualRainbowY, rainbowOffset).use {
                         fontRenderer.drawString(displayText, 0F, 2 - heightPadding, colorToUse, shadow)
 
                         if (editMode && mc.currentScreen is GuiHudDesigner && editTicks <= 40) {

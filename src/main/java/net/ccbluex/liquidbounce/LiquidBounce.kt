@@ -25,6 +25,7 @@ import net.ccbluex.liquidbounce.features.special.ClientRichPresence.showRPCValue
 import net.ccbluex.liquidbounce.file.FileManager
 import net.ccbluex.liquidbounce.file.FileManager.loadAllConfigs
 import net.ccbluex.liquidbounce.file.FileManager.saveAllConfigs
+import net.ccbluex.liquidbounce.file.configs.models.ClientConfiguration
 import net.ccbluex.liquidbounce.file.configs.models.ClientConfiguration.updateClientWindow
 import net.ccbluex.liquidbounce.lang.LanguageManager.loadLanguages
 import net.ccbluex.liquidbounce.script.ScriptManager
@@ -55,6 +56,7 @@ import net.ccbluex.liquidbounce.utils.movement.MovementUtils
 import net.ccbluex.liquidbounce.utils.movement.TimerBalanceUtils
 import net.ccbluex.liquidbounce.utils.render.MiniMapRegister
 import net.ccbluex.liquidbounce.utils.render.shader.Background
+import net.ccbluex.liquidbounce.utils.render.shader.BuiltinShaderBackground
 import net.ccbluex.liquidbounce.utils.rotation.RotationUtils
 import net.ccbluex.liquidbounce.utils.timing.TickedActions
 import net.ccbluex.liquidbounce.utils.timing.WaitTickUtils
@@ -106,6 +108,23 @@ object LiquidBounce {
 
     // Menu Background
     var background: Background? = null
+    var defaultMenuBackground: BuiltinShaderBackground? = null
+    var customMenuBackground: BuiltinShaderBackground? = null
+
+    fun getCurrentBackground(): Background? {
+        val customBgFile = FileManager.backgroundImageFile
+        val customShaderFile = FileManager.backgroundShaderFile
+        
+        if (customBgFile.exists() || customShaderFile.exists()) {
+            return background
+        }
+        
+        return if (ClientConfiguration.mainMenuStyle == "Custom") {
+            customMenuBackground ?: Background.fromBuiltin(ClientConfiguration.customMenuBackgroundIndex).also { customMenuBackground = it }
+        } else {
+            defaultMenuBackground ?: Background.fromBuiltin(ClientConfiguration.defaultMenuBackgroundIndex).also { defaultMenuBackground = it }
+        }
+    }
 
     // Discord RPC
     val clientRichPresence = ClientRichPresence
@@ -125,11 +144,6 @@ object LiquidBounce {
         SharedScopes.IO.launch {
             try {
                 LOGGER.info("Starting preload tasks of $CLIENT_NAME")
-
-                // Download and extract fonts
-                Fonts.downloadFonts()
-
-
 
                 // Load languages
                 loadLanguages()

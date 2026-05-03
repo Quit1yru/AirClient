@@ -4,6 +4,7 @@
  */
 package net.ccbluex.liquidbounce.ui.client
 
+import net.ccbluex.liquidbounce.LiquidBounce
 import net.ccbluex.liquidbounce.LiquidBounce.CLIENT_NAME
 import net.ccbluex.liquidbounce.LiquidBounce.clientVersionText
 
@@ -21,6 +22,8 @@ import net.ccbluex.liquidbounce.ui.client.mainmenu.CustomMainMenu
 import net.ccbluex.liquidbounce.utils.render.RenderUtils.drawRoundedBorderRect
 import net.ccbluex.liquidbounce.utils.timing.MSTimer
 import net.ccbluex.liquidbounce.utils.ui.AbstractScreen
+import net.ccbluex.liquidbounce.utils.render.shader.Background
+import net.ccbluex.liquidbounce.utils.render.shader.BuiltinShaderBackground
 import net.minecraft.client.gui.GuiButton
 import net.minecraft.client.gui.GuiMultiplayer
 import net.minecraft.client.gui.GuiOptions
@@ -82,23 +85,21 @@ class GuiMainMenu : AbstractScreen() {
 
     private fun showWelcomePopup() {
         popup = PopupScreen {
-            title("§a§lWelcome!")
+            title("§a§l欢迎使用 §eAirClient§e!")
             message("""
                 
-                §e感谢您使用 §eD1ckBounce§e!
+                §e感谢您使用 §eAirClient§e!
 
-                §6这是一些有用的建议:§r
-                §a- §fClickGUI:§r 按下 §7[RightShift]§f 打开 ClickGUI.
-                §a- §fRight-click 编辑模块:§r 右键点击模块以编辑
-
-                §6重要的命令建议:§r
-                §a- §f.bind <module> <key> / .bind <module> none
-                §a- §f.config load <name> / .config list
-
-                §b加入我们的QQ群获取更多支持！§r
+                §b加入我们的QQ群获取支持！§r
                 - §fQQ:722573066
+
+                §b重要提示!§r
+                - §f按下 §7[RightShift]§f 打开 ClickGUI.
+                - §f在HUDEdit编辑HUD元素.
+                - §f在Thememanager切换主题颜色!
+
             """.trimIndent())
-            button("§aOK")
+            button("§a好的")
             onClose { popup = null }
         }
     }
@@ -185,6 +186,29 @@ class GuiMainMenu : AbstractScreen() {
             true
         )
 
+        val bgBtnX = 5
+        val bgBtnY = height - 50
+        val bgBtnWidth = 80
+        val bgBtnHeight = 20
+        val isHoveringBg = mouseX >= bgBtnX && mouseX <= bgBtnX + bgBtnWidth && 
+                           mouseY >= bgBtnY && mouseY <= bgBtnY + bgBtnHeight
+        val bgBtnColor = if (isHoveringBg) 0x80000000.toInt() else 0x60000000.toInt()
+        val bgTextColor = if (isHoveringBg) 0xFFAAAAAA.toInt() else 0xFF888888.toInt()
+        
+        drawRoundedBorderRect(
+            bgBtnX.toFloat(), bgBtnY.toFloat(), 
+            (bgBtnX + bgBtnWidth).toFloat(), (bgBtnY + bgBtnHeight).toFloat(),
+            2f, bgBtnColor, bgBtnColor, 2f
+        )
+        
+        val currentBgName = Background.BUILTIN_BACKGROUND_NAMES[ClientConfiguration.defaultMenuBackgroundIndex] ?: "None Grid"
+        Fonts.fontSemibold35.drawCenteredString(
+            currentBgName, 
+            bgBtnX + bgBtnWidth / 2f, 
+            bgBtnY + (bgBtnHeight - Fonts.fontSemibold35.FONT_HEIGHT) / 2f,
+            bgTextColor, true
+        )
+
         val switchBtnX = 5
         val switchBtnY = height - 25
         val switchBtnWidth = 80
@@ -230,6 +254,23 @@ class GuiMainMenu : AbstractScreen() {
             ClientConfiguration.mainMenuStyle = "Custom"
             FileManager.saveConfig(valuesConfig)
             mc.displayGuiScreen(CustomMainMenu())
+            switchButtonTimer.reset()
+            return
+        }
+
+        val bgBtnX = 5
+        val bgBtnY = height - 50
+        val bgBtnWidth = 80
+        val bgBtnHeight = 20
+        val isHoveringBg = mouseX >= bgBtnX && mouseX <= bgBtnX + bgBtnWidth && 
+                           mouseY >= bgBtnY && mouseY <= bgBtnY + bgBtnHeight
+        
+        if (isHoveringBg && mouseButton == 0 && switchButtonTimer.hasTimePassed(200)) {
+            val currentIndex = ClientConfiguration.defaultMenuBackgroundIndex
+            val newIndex = (currentIndex + 1) % Background.BUILTIN_BACKGROUNDS.size
+            ClientConfiguration.defaultMenuBackgroundIndex = newIndex
+            LiquidBounce.defaultMenuBackground = Background.fromBuiltin(newIndex)
+            FileManager.saveConfig(valuesConfig)
             switchButtonTimer.reset()
             return
         }

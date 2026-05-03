@@ -32,8 +32,7 @@ object MVPDisplay : Module("MVPDisplay", Category.RENDER, gameDetecting = false)
     private val victoryKeywords = listOf(
         "win", "victory", "胜", "赢", "winner", "champion", "冠军",
         "first place", "第一名", "you won", "胜利", "mvp", "best",
-        "game over", "游戏结束", "获胜", "成功", "success", "triumph",
-        "congratulations", "恭喜", "well played"
+         "获胜", "triumph", "恭喜", "well played"
     )
 
     private val checkFirework by boolean("检测烟花", true)
@@ -68,7 +67,7 @@ object MVPDisplay : Module("MVPDisplay", Category.RENDER, gameDetecting = false)
 
     private val firstLineText by text("第一行文字", "MVP")
     private val secondLineText by text("第二行文字", "为本场MVP!")
-    private val thirdLineText by text("第三行文字", "♪正在向全体玩家高奏您的MVP凯歌 ")
+    private val thirdLineText by text("第三行文字", "♪正在高奏您的MVP凯歌:  ")
 
     private val displayDuration by int("显示时间(秒)", 5, 1..30)
     private val fadeAnimation by boolean("淡入淡出动画", true)

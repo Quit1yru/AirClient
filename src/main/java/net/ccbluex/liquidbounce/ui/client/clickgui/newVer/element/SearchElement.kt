@@ -188,12 +188,6 @@ class SearchElement {
     }
 
     fun handleTyping(typedChar: Char, keyCode: Int, x: Float, y: Float, w: Float, h: Float, ces: List<CategoryElement>): Boolean {
-        if (searchBox?.isFocused == true) {
-            val prevText = searchBox?.text
-            searchBox?.textboxKeyTyped(typedChar, keyCode)
-            return searchBox?.text != prevText
-        }
-        
         var startY = y + 50F
         for (ce in ces) {
             for (me in ce.moduleElements) {
@@ -208,6 +202,13 @@ class SearchElement {
                 }
             }
         }
+        
+        if (searchBox?.isFocused == true) {
+            val prevText = searchBox?.text
+            searchBox?.textboxKeyTyped(typedChar, keyCode)
+            return searchBox?.text != prevText
+        }
+        
         return false
     }
 

@@ -14,13 +14,13 @@ object ChatPrefix : Module("ChatPrefix", Category.CLIENT) {
             "Naven",
             "Opai",
             "FireBounce",
-            "D1ckBounce",
+            "AirClient",
             "Augustus",
             "Mayu",
             "SilenceFix",
             "Custom"
         ),
-        "D1ckBounce"
+        "AirClient"
     )
     
     val customPrefix by text("CustomText", "[Prefix]") { mode == "Custom" }
@@ -30,12 +30,12 @@ object ChatPrefix : Module("ChatPrefix", Category.CLIENT) {
             "naven" -> "[§bN§r] "
             "opai" -> "§fOpai >>§r "
             "firebounce" -> "§8[§cF§6i§er§ae§bB§do§9u§5n§cc§6e§8]§r "
-            "d1ckbounce" -> "§8[§b§lD1ckBounce§8]§r §f§l» §r"
+            "airclient" -> "§8[§b§lAirClient]§r §f§l» §r"
             "augustus" -> "§6[§9Augustus§6]§r "
             "mayu" -> "§7[§cM§6y§ea§au§7]§r "
-            "silencefix" -> "§b欣欣公益客户�?§7>§r "
+            "silencefix" -> "§b欣欣公益客户端§7>§r "
             "custom" -> "$customPrefix "
-            else -> "§8[§b§lD1ckBounce]§r §f§l» §r"
+            else -> "§8[§b§lAirClient]§r §f§l» §r"
         }
     }
     
