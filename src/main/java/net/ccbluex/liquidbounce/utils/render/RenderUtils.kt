@@ -540,34 +540,6 @@ object RenderUtils : MinecraftInstance {
         popAttrib()
     }
 
-    fun drawCone(width: Float, height: Float, useTexture: Boolean = false) {
-        if (useTexture) {
-            mc.textureManager.bindTexture(ResourceLocation("airclient/textures/hat.png"))
-            enableTexture2D()
-            depthMask(true)
-        }
-
-        drawWithTessellatorWorldRenderer {
-            begin(GL_TRIANGLE_FAN, if (useTexture) DefaultVertexFormats.POSITION_TEX else DefaultVertexFormats.POSITION)
-
-            if (useTexture) {
-                pos(0.0, height.toDouble(), 0.0).tex(0.5, 0.5).endVertex()
-            } else {
-                pos(0.0, height.toDouble(), 0.0).endVertex()
-            }
-
-            for (point in circlePoints) {
-                if (useTexture) {
-                    val u = 0.5 + 0.5 * point.x
-                    val v = 0.5 + 0.5 * point.z
-                    pos(point.x * width, 0.0, point.z * width).tex(u, v).endVertex()
-                } else {
-                    pos(point.x * width, 0.0, point.z * width).endVertex()
-                }
-            }
-        }
-    }
-
     fun drawEntityBox(entity: Entity, color: Color, outline: Boolean) {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         enableGlCap(GL_BLEND)
@@ -2125,5 +2097,110 @@ object RenderUtils : MinecraftInstance {
 
     fun color(color: Int) {
         color(color, (color shr 24 and 0xFF) / 255.0f)
+    }
+
+    fun fastRoundedRect(x0: Float, y0: Float, x1: Float, y1: Float, radius: Float) {
+        val tessellator = Tessellator.getInstance()
+        val worldrenderer = tessellator.worldRenderer
+        
+        glBegin(GL_POLYGON)
+        
+        val degree = Math.PI / 180
+        var i = 0.0
+        while (i <= 90) {
+            glVertex2d(x1 - radius + sin(i * degree) * radius, y1 - radius + cos(i * degree) * radius)
+            i += 1.0
+        }
+        i = 90.0
+        while (i <= 180) {
+            glVertex2d(x1 - radius + sin(i * degree) * radius, y0 + radius + cos(i * degree) * radius)
+            i += 1.0
+        }
+        i = 180.0
+        while (i <= 270) {
+            glVertex2d(x0 + radius + sin(i * degree) * radius, y0 + radius + cos(i * degree) * radius)
+            i += 1.0
+        }
+        i = 270.0
+        while (i <= 360) {
+            glVertex2d(x0 + radius + sin(i * degree) * radius, y1 - radius + cos(i * degree) * radius)
+            i += 1.0
+        }
+        
+        glEnd()
+    }
+
+    fun drawRoundedCornerRect(x: Float, y: Float, x2: Float, y2: Float, radius: Float, color: Int) {
+        glEnable(GL_BLEND)
+        glDisable(GL_TEXTURE_2D)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glEnable(GL_LINE_SMOOTH)
+        
+        val alpha = (color shr 24 and 0xFF) / 255.0f
+        val red = (color shr 16 and 0xFF) / 255.0f
+        val green = (color shr 8 and 0xFF) / 255.0f
+        val blue = (color and 0xFF) / 255.0f
+        
+        glColor4f(red, green, blue, alpha)
+        
+        glBegin(GL_POLYGON)
+        
+        val degree = Math.PI / 180
+        var i = 0.0
+        while (i <= 90) {
+            glVertex2d(x2 - radius + sin(i * degree) * radius, y2 - radius + cos(i * degree) * radius)
+            i += 1.0
+        }
+        i = 90.0
+        while (i <= 180) {
+            glVertex2d(x2 - radius + sin(i * degree) * radius, y + radius + cos(i * degree) * radius)
+            i += 1.0
+        }
+        i = 180.0
+        while (i <= 270) {
+            glVertex2d(x + radius + sin(i * degree) * radius, y + radius + cos(i * degree) * radius)
+            i += 1.0
+        }
+        i = 270.0
+        while (i <= 360) {
+            glVertex2d(x + radius + sin(i * degree) * radius, y2 - radius + cos(i * degree) * radius)
+            i += 1.0
+        }
+        
+        glEnd()
+        
+        glEnable(GL_TEXTURE_2D)
+        glDisable(GL_BLEND)
+        glDisable(GL_LINE_SMOOTH)
+    }
+
+    fun drawEntityOnScreen(posX: Double, posY: Double, scale: Float, entity: EntityLivingBase) {
+        GlStateManager.pushMatrix()
+        GlStateManager.enableColorMaterial()
+
+        GlStateManager.translate(posX, posY, 50.0)
+        GlStateManager.scale((-scale), scale, scale)
+        GlStateManager.rotate(180F, 0F, 0F, 1F)
+        GlStateManager.rotate(135F, 0F, 1F, 0F)
+        net.minecraft.client.renderer.RenderHelper.enableStandardItemLighting()
+        GlStateManager.rotate(-135F, 0F, 1F, 0F)
+        GlStateManager.translate(0.0, 0.0, 0.0)
+
+        val rendermanager = mc.renderManager
+        rendermanager.setPlayerViewY(180F)
+        rendermanager.isRenderShadow = false
+        rendermanager.renderEntityWithPosYaw(entity, 0.0, 0.0, 0.0, 0F, 1F)
+        rendermanager.isRenderShadow = true
+
+        GlStateManager.popMatrix()
+        net.minecraft.client.renderer.RenderHelper.disableStandardItemLighting()
+        GlStateManager.disableRescaleNormal()
+        GlStateManager.setActiveTexture(net.minecraft.client.renderer.OpenGlHelper.lightmapTexUnit)
+        GlStateManager.disableTexture2D()
+        GlStateManager.setActiveTexture(net.minecraft.client.renderer.OpenGlHelper.defaultTexUnit)
+    }
+
+    fun drawEntityOnScreen(posX: Int, posY: Int, scale: Int, entity: EntityLivingBase) {
+        drawEntityOnScreen(posX.toDouble(), posY.toDouble(), scale.toFloat(), entity)
     }
 }

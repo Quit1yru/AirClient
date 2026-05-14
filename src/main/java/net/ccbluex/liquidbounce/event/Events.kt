@@ -21,6 +21,13 @@ import net.minecraft.util.*
 class AttackEvent(val targetEntity: Entity?) : Event()
 
 /**
+ * Called when an entity gets hurt
+ *
+ * @param entity The entity that got hurt
+ */
+class EntityDamageEvent(val entity: Entity) : Event()
+
+/**
  * Called when player kills an entity
  */
 class EntityKilledEvent(val targetEntity: Entity?) : Event()
@@ -227,6 +234,10 @@ object StartupEvent : Event()
 
 class ModuleToggleEvent(val module: net.ccbluex.liquidbounce.features.module.Module, val state: Boolean) : Event()
 
+class BlockBreakEvent(val blockPos: BlockPos, val block: Block) : Event()
+
+class BlockPlaceEvent(val blockPos: BlockPos, val block: Block) : Event()
+
 internal val ALL_EVENT_CLASSES = arrayOf(
     PlayerTickEvent::class.java,
     StepConfirmEvent::class.java,
@@ -251,6 +262,7 @@ internal val ALL_EVENT_CLASSES = arrayOf(
     UpdateEvent::class.java,
     RotationSetEvent::class.java,
     EntityMovementEvent::class.java,
+    EntityDamageEvent::class.java,
     ClientSlotChangeEvent::class.java,
     PacketEvent::class.java,
     CameraPositionEvent::class.java,
@@ -264,5 +276,7 @@ internal val ALL_EVENT_CLASSES = arrayOf(
     MotionEvent::class.java,
     WorldEvent::class.java,
     DelayedPacketProcessEvent::class.java,
-    ModuleToggleEvent::class.java
+    ModuleToggleEvent::class.java,
+    BlockBreakEvent::class.java,
+    BlockPlaceEvent::class.java
 )

@@ -200,6 +200,30 @@ object ColorUtils {
         return Color(color.red, color.green, color.blue, alpha)
     }
 
+    fun colorCode(code: String, alpha: Int = 255): Color {
+        val colorIndex = when (code.lowercase()) {
+            "0" -> 0
+            "1" -> 1
+            "2" -> 2
+            "3" -> 3
+            "4" -> 4
+            "5" -> 5
+            "6" -> 6
+            "7" -> 7
+            "8" -> 8
+            "9" -> 9
+            "a" -> 10
+            "b" -> 11
+            "c" -> 12
+            "d" -> 13
+            "e" -> 14
+            "f" -> 15
+            else -> return Color.WHITE
+        }
+        val rgb = hexColors[colorIndex]
+        return Color(rgb).withAlpha(alpha)
+    }
+
     fun getHealthColor(health: Float?, maxHealth: Float?): Color {
         val safeHealth = health ?: 0.0f
         val safeMaxHealth = maxHealth ?: 1.0f

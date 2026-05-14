@@ -7,6 +7,7 @@ package net.ccbluex.liquidbounce.file.configs
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import net.ccbluex.liquidbounce.config.FontValue
+import net.ccbluex.liquidbounce.config.Value
 import net.ccbluex.liquidbounce.file.FileConfig
 import net.ccbluex.liquidbounce.ui.client.hud.HUD
 import net.ccbluex.liquidbounce.ui.client.hud.element.Side
@@ -44,14 +45,14 @@ class HudConfig(file: File) : FileConfig(file) {
                 val type = jsonObject["Type"].asString
 
                 try {
-                    val elementClass = HUD.ELEMENTS.entries.find { it.value.name == type }?.key
+                    val elementClass = HUD.ELEMENTS.toList().find { it.second?.name == type }?.first
 
                     if (elementClass == null) {
                         ClientUtils.LOGGER.warn("Unrecognized HUD element: '$type'")
                         continue
                     }
 
-                    val element = elementClass.newInstance()
+                    val element = elementClass.getDeclaredConstructor().newInstance()
 
                     element.x = jsonObject["X"].asDouble
                     element.y = jsonObject["Y"].asDouble
@@ -63,12 +64,11 @@ class HudConfig(file: File) : FileConfig(file) {
 
                     for (value in element.values) {
                         if (jsonObject.has(value.name))
-                            value.fromJson(jsonObject[value.name])
+                            (value as Value<*>).fromJson(jsonObject[value.name])
                     }
 
-                    // Support for old HUD files
                     if (jsonObject.has("font"))
-                        element.values.find { it is FontValue }?.fromJson(jsonObject["font"])
+                        (element.values.find { it is FontValue } as? Value<*>)?.fromJson(jsonObject["font"])
 
                     HUD.addElement(element)
                 } catch (e: Exception) {
@@ -77,9 +77,9 @@ class HudConfig(file: File) : FileConfig(file) {
             }
 
             // Add forced elements when missing
-            for ((elementClass, info) in HUD.ELEMENTS) {
-                if (info.force && HUD.elements.none { it.javaClass == elementClass }) {
-                    HUD.addElement(elementClass.newInstance())
+            for ((elementClass, info) in HUD.ELEMENTS.toList()) {
+                if (info?.force == true && HUD.elements.none { it.javaClass == elementClass }) {
+                    HUD.addElement(elementClass.getDeclaredConstructor().newInstance())
                 }
             }
         } catch (e: Exception) {

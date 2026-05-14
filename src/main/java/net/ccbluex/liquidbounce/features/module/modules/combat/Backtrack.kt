@@ -64,7 +64,7 @@ object Backtrack : Module("Backtrack", Category.COMBAT) {
 
     // Modern
     private val style by choices("Style", arrayOf("Pulse", "Smooth"), "Smooth") { mode == "Modern" }
-    private val distance by floatRange("Distance", 2f..3f, 0f..6f) { mode == "Modern" }
+    private val distance by floatRange("Distance", 2f..3f, 0f..30f) { mode == "Modern" }
     private val smart by boolean("Smart", true) { mode == "Modern" }
 
     // ESP
@@ -241,8 +241,9 @@ object Backtrack : Module("Backtrack", Category.COMBAT) {
                 if (!Blink.blinkingReceive() && targetMixin.truePos) {
                     val trueDist = mc.thePlayer.getDistance(targetMixin.trueX, targetMixin.trueY, targetMixin.trueZ)
                     val dist = mc.thePlayer.getDistance(target.posX, target.posY, target.posZ)
+                    val maxDistance = distance.endInclusive
 
-                    if (trueDist <= 6f && (!smart || trueDist >= dist) && (style == "Smooth" || !globalTimer.hasTimePassed(
+                    if (trueDist <= maxDistance && (!smart || trueDist >= dist) && (style == "Smooth" || !globalTimer.hasTimePassed(
                             supposedDelay
                         ))
                     ) {
@@ -469,23 +470,33 @@ object Backtrack : Module("Backtrack", Category.COMBAT) {
     private fun getRangeTime(): Long {
         val target = this.target ?: return 0L
 
-        var time = 0L
+        var bestTime = 0L
+        var bestDistance = Double.MAX_VALUE
         var found = false
+        var foundTime = 0L
 
         for (data in positions) {
-            time = data.second
+            val currentTime = data.second
 
             val targetPos = target.currPos
 
             val targetBox = target.hitBox.offset(data.first - targetPos)
 
-            if (mc.thePlayer.getDistanceToBox(targetBox) in distance) {
+            val distToBox = mc.thePlayer.getDistanceToBox(targetBox)
+            
+            if (distToBox in distance) {
                 found = true
+                foundTime = currentTime
                 break
+            }
+            
+            if (distToBox < bestDistance) {
+                bestDistance = distToBox
+                bestTime = currentTime
             }
         }
 
-        return if (found) time else -1L
+        return if (found) foundTime else bestTime
     }
 
     private fun clearPackets(handlePackets: Boolean = true, stopRendering: Boolean = true) {

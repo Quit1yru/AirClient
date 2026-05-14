@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.ccbluex.liquidbounce.config.SettingsUtils
 import net.ccbluex.liquidbounce.features.command.Command
+import net.ccbluex.liquidbounce.LiquidBounce.moduleManager
 import net.ccbluex.liquidbounce.file.FileManager.settingsDir
 import net.ccbluex.liquidbounce.ui.client.hud.HUD.addNotification
 import net.ccbluex.liquidbounce.ui.client.hud.element.elements.Notification
@@ -21,14 +22,11 @@ import java.io.IOException
 
 object LocalSettingsCommand : Command("localsettings", "localsetting", "localconfig") {
 
-    /**
-     * Execute commands with provided [args]
-     */
     override fun execute(args: Array<String>) {
         val usedAlias = args[0].lowercase()
 
         if (args.size <= 1) {
-            chatSyntax("$usedAlias <load/save/list/delete/folder>")
+            chatSyntax("$usedAlias <load/save/list/delete/folder/loadmodule>")
             return
         }
 
@@ -39,7 +37,8 @@ object LocalSettingsCommand : Command("localsettings", "localsetting", "localcon
                 "delete" -> deleteSettings(args)
                 "list" -> listSettings()
                 "folder" -> openSettingsFolder()
-                else -> chatSyntax("$usedAlias <load/save/list/delete/folder>")
+                "loadmodule" -> loadModuleSettings(args)
+                else -> chatSyntax("$usedAlias <load/save/list/delete/folder/loadmodule>")
             }
         }
     }
@@ -68,6 +67,56 @@ object LocalSettingsCommand : Command("localsettings", "localsetting", "localcon
                 playEdit()
             } catch (e: IOException) {
                 e.printStackTrace()
+            }
+        }
+    }
+
+    private suspend fun loadModuleSettings(args: Array<String>) {
+        withContext(Dispatchers.IO) {
+            if (args.size <= 3) {
+                chatSyntax("${args[0].lowercase()} loadmodule <module> <config>")
+                return@withContext
+            }
+
+            val moduleName = args[2]
+            val configName = args[3]
+            
+            val module = moduleManager[moduleName]
+            if (module == null) {
+                chat("§cModule §a§l$moduleName§c does not exist!")
+                return@withContext
+            }
+
+            val settingsFile = File(settingsDir, "$configName.txt")
+
+            if (!settingsFile.exists()) {
+                chat("§cSettings file does not exist! §e(Ensure its .txt)")
+                return@withContext
+            }
+
+            try {
+                chat("§9Loading settings for module §a§l$moduleName§9 from config §a§l$configName§9...")
+                val settings = settingsFile.readText()
+                
+                val moduleLines = settings.lineSequence().filter { line ->
+                    if (line.isEmpty() || line.startsWith('#')) return@filter false
+                    val parts = line.split(' ')
+                    parts.isNotEmpty() && parts[0].equals(moduleName, ignoreCase = true)
+                }.joinToString("\n")
+                
+                if (moduleLines.isBlank()) {
+                    chat("§cNo settings found for module §a§l$moduleName§c in config §a§l$configName§c.")
+                    return@withContext
+                }
+                
+                chat("§9Applying module settings...")
+                SettingsUtils.applyScript(moduleLines)
+                chat("§6Settings for module §a§l$moduleName§6 loaded successfully from config §a§l$configName§6.")
+                addNotification(Notification.informative("Local Settings Command", "Loaded $moduleName from $configName"))
+                playEdit()
+            } catch (e: IOException) {
+                e.printStackTrace()
+                chat("§cFailed to load module settings: §3${e.message}")
             }
         }
     }
@@ -160,7 +209,7 @@ object LocalSettingsCommand : Command("localsettings", "localsetting", "localcon
         if (args.isEmpty()) return emptyList()
 
         return when (args.size) {
-            1 -> listOf("delete", "list", "load", "save", "folder").filter { it.startsWith(args[0], true) }
+            1 -> listOf("delete", "list", "load", "save", "folder", "loadmodule").filter { it.startsWith(args[0], true) }
 
             2 -> {
                 when (args[0].lowercase()) {
@@ -168,7 +217,9 @@ object LocalSettingsCommand : Command("localsettings", "localsetting", "localcon
                         val settings = settingsDir.listFiles() ?: return emptyList()
                         settings.map { it.name.removeSuffix(".txt") }.filter { it.startsWith(args[1], true) }
                     }
-
+                    "loadmodule" -> {
+                        moduleManager.map { it.name }.filter { it.startsWith(args[1], true) }
+                    }
                     else -> emptyList()
                 }
             }
@@ -181,7 +232,10 @@ object LocalSettingsCommand : Command("localsettings", "localsetting", "localcon
                             true
                         )
                     }
-
+                    "loadmodule" -> {
+                        val settings = settingsDir.listFiles() ?: return emptyList()
+                        settings.map { it.name.removeSuffix(".txt") }.filter { it.startsWith(args[2], true) }
+                    }
                     else -> emptyList()
                 }
             }

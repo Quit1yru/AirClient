@@ -21,23 +21,12 @@ object TacoCommand : Command("taco"), Listenable {
     private var image = 0
     private var running = 0f
     private val tacoTextures = arrayOf(
-        ResourceLocation("airclient/taco/1.png"),
-        ResourceLocation("airclient/taco/2.png"),
-        ResourceLocation("airclient/taco/3.png"),
-        ResourceLocation("airclient/taco/4.png"),
-        ResourceLocation("airclient/taco/5.png"),
-        ResourceLocation("airclient/taco/6.png"),
-        ResourceLocation("airclient/taco/7.png"),
-        ResourceLocation("airclient/taco/8.png"),
-        ResourceLocation("airclient/taco/9.png"),
-        ResourceLocation("airclient/taco/10.png"),
-        ResourceLocation("airclient/taco/11.png"),
-        ResourceLocation("airclient/taco/12.png")
+        ResourceLocation("airclient/taco/1.jpg"),
+        ResourceLocation("airclient/taco/2.jpg"),
+        ResourceLocation("airclient/taco/3.jpg"),
+        ResourceLocation("airclient/taco/4.jpg")
     )
 
-    /**
-     * Execute commands with provided [args]
-     */
     override fun execute(args: Array<String>) {
         tacoToggle = !tacoToggle
         chat(if (tacoToggle) "§aTACO TACO TACO. :)" else "§cYou made the little taco sad! :(")
@@ -63,7 +52,6 @@ object TacoCommand : Command("taco"), Listenable {
         image++
         if (image >= tacoTextures.size) image = 0
     }
-
 
     override fun tabComplete(args: Array<String>) = listOf("TACO")
 }

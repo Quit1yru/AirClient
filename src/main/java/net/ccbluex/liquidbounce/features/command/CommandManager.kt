@@ -34,7 +34,6 @@ object CommandManager {
         registerCommand(SettingsCommand)
         registerCommand(PacketDebuggerCommand)
         registerCommand(LocalSettingsCommand)
-        registerCommand(LocalHUDCommand)
         registerCommand(LocalThemesCommand)
         registerCommand(ServerInfoCommand)
         registerCommand(ToggleCommand)

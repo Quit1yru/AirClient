@@ -132,9 +132,9 @@ class EditorPanel(private val hudDesigner: GuiHudDesigner, var x: Int, var y: In
         width = 90
 
         for ((element, info) in ELEMENTS) {
-            if (info.single && HUD.elements.any { it.javaClass == element }) continue
+            if (info?.single == true && HUD.elements.any { it.javaClass == element }) continue
 
-            val name = info.name
+            val name = info?.name ?: continue
 
             fontSemibold35.drawString(name, x + 2f, y + height.toFloat(), Color.WHITE.rgb)
 
@@ -143,12 +143,10 @@ class EditorPanel(private val hudDesigner: GuiHudDesigner, var x: Int, var y: In
 
             if (Mouse.isButtonDown(0) && !mouseDown && mouseX in x..x + width && mouseY in y + height..y + height + 10) {
                 try {
-                    val newElement = element.newInstance()
+                    val newElement = element.getDeclaredConstructor().newInstance()
 
                     if (newElement.createElement()) HUD.addElement(newElement)
-                } catch (e: InstantiationException) {
-                    e.printStackTrace()
-                } catch (e: IllegalAccessException) {
+                } catch (e: Exception) {
                     e.printStackTrace()
                 }
                 create = false

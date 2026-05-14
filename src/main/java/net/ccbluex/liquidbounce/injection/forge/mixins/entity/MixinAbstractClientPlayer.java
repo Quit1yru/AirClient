@@ -27,19 +27,27 @@ import static net.ccbluex.liquidbounce.utils.client.MinecraftInstance.mc;
 @SideOnly(Side.CLIENT)
 public abstract class MixinAbstractClientPlayer extends MixinEntityPlayer {
 
-    private CapeInfo capeInfo;
+    private CapeInfo onlineCapeInfo;
 
     @Inject(method = "getLocationCape", at = @At("HEAD"), cancellable = true)
     private void getCape(CallbackInfoReturnable<ResourceLocation> callbackInfoReturnable) {
-        if (capeInfo == null) {
+        // 首先检查Cape模块是否提供了自定义披风
+        ResourceLocation customCape = CapeAPI.INSTANCE.getCustomCape(getUniqueID());
+        if (customCape != null) {
+            callbackInfoReturnable.setReturnValue(customCape);
+            return;
+        }
+
+        // 如果没有自定义披风，尝试加载在线披风
+        if (onlineCapeInfo == null) {
             CapeAPI.INSTANCE.loadCape(getUniqueID(), newCapeInfo -> {
-                capeInfo = newCapeInfo;
+                onlineCapeInfo = newCapeInfo;
                 return null;
             });
         }
 
-        if (capeInfo != null && capeInfo.isCapeAvailable()) {
-            callbackInfoReturnable.setReturnValue(capeInfo.getResourceLocation());
+        if (onlineCapeInfo != null && onlineCapeInfo.isCapeAvailable()) {
+            callbackInfoReturnable.setReturnValue(onlineCapeInfo.getResourceLocation());
         }
     }
 

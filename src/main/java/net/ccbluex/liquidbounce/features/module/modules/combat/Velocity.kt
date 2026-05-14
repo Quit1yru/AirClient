@@ -52,7 +52,7 @@ object Velocity : Module("Velocity", Category.COMBAT) {
             "Reverse", "SmoothReverse", "Jump", "Glitch", "Legit",
             "GhostBlock", "Vulcan", "S32Packet", "MatrixReduce",
             "IntaveReduce", "Delay", "GrimC03", "Hypixel", "HypixelAir",
-            "Click", "BlocksMC", "OldGrim", "Polar", "Buffer", "GrimNew", "Prediction"
+            "Click", "BlocksMC", "Polar", "Buffer", "Prediction"
         ), "Simple"
     )
 
@@ -128,14 +128,6 @@ object Velocity : Module("Velocity", Category.COMBAT) {
     private val ignoreBlocking by boolean("IgnoreBlocking", false) { mode == "Click" }
     private val clickRange by float("ClickRange", 3f, 1f..6f) { mode == "Click" }
     private val swingMode by choices("SwingMode", arrayOf("Off", "Normal", "Packet"), "Normal") { mode == "Click" }
-
-    // OldGrim
-    private val grimRange by float("GrimRange", 3.5f, 0f..6f) { mode == "OldGrim" }
-    private val fireCheck by boolean("FireCheck", false) { mode == "OldGrim" }
-    private val waterCheck by boolean("WaterCheck", false) { mode == "OldGrim" }
-    private val fallCheck by boolean("FallCheck", false) { mode == "OldGrim" }
-    private val consumeCheck by boolean("ConsumeCheck", false) { mode == "OldGrim" }
-    private val raycast by boolean("Raycast", false) { mode == "OldGrim" }
 
     // Prediction
     private val predictionClicks by intRange("PredictionClicks", 1..2, 1..20) { mode == "Prediction" }
@@ -365,14 +357,6 @@ object Velocity : Module("Velocity", Category.COMBAT) {
                 }
             }
 
-            "oldgrim" -> {
-                if (attacked && mc.thePlayer.hurtTime > 0 && mc.thePlayer.onGround) {
-                    mc.thePlayer.addVelocity(-1.3E-10, -1.3E-10, -1.3E-10)
-                    mc.thePlayer.isSprinting = false
-                    attacked = false
-                }
-            }
-
             "prediction" -> {
                 if (hasReceivedVelocity) {
                     if (!thePlayer.isJumping && thePlayer.isSprinting && thePlayer.onGround && thePlayer.hurtTime == 9) {
@@ -387,12 +371,6 @@ object Velocity : Module("Velocity", Category.COMBAT) {
                 if (thePlayer.hurtTime == polarHurtTime) {
                     thePlayer.tryJump()
                     polarHurtTime = kotlin.random.Random.nextInt(8, 10)
-                }
-            }
-
-            "grimnew" -> {
-                if (thePlayer.hurtTime > 0 && thePlayer.onGround) {
-                    thePlayer.tryJump()
                 }
             }
         }
@@ -454,17 +432,23 @@ object Velocity : Module("Velocity", Category.COMBAT) {
             var target: Entity? = mc.objectMouseOver?.entityHit
 
             if (target == null) {
-                target = getNearestEntityInRange(3f)?.takeIf { isSelected(it, true) }
+                runWithModifiedRaycastResult(
+                    currentRotation ?: thePlayer.rotation,
+                    3.0,
+                    0.0
+                ) {
+                    target = it.entityHit?.takeIf { isSelected(it, true) }
+                }
             }
 
-            target ?: return@handler
+            val finalTarget = target ?: return@handler
 
             val swingHand = {
                 thePlayer.swingItem()
             }
 
             repeat(predictionClicks.random()) {
-                thePlayer.attackEntityWithModifiedSprint(target, true) { swingHand() }
+                thePlayer.attackEntityWithModifiedSprint(finalTarget, true) { swingHand() }
             }
             return@handler
         }
@@ -688,38 +672,6 @@ object Velocity : Module("Velocity", Category.COMBAT) {
                 "s32packet" -> {
                     hasReceivedVelocity = true
                     event.cancelEvent()
-                }
-
-                "oldgrim" -> {
-                    if (mc.thePlayer.isDead) return@handler
-                    if (mc.thePlayer.isOnLadder) return@handler
-                    if (mc.thePlayer.isBurning && fireCheck) return@handler
-                    if (mc.thePlayer.isInWater && waterCheck) return@handler
-                    if (mc.thePlayer.fallDistance > 1.5 && fallCheck) return@handler
-                    if (mc.thePlayer.isEating && consumeCheck) return@handler
-                    if (packet is S12PacketEntityVelocity && packet.entityID == thePlayer.entityId) {
-                        val s12 = packet
-                        val horizontalStrength = sqrt(s12.motionX.toDouble() * s12.motionX.toDouble() + s12.motionZ.toDouble() * s12.motionZ.toDouble())
-                        if (horizontalStrength <= 1000) return@handler
-                        val mouse = mc.objectMouseOver
-                        var entity: Entity? = null
-
-                        if (mouse != null && mouse.typeOfHit == net.minecraft.util.MovingObjectPosition.MovingObjectType.ENTITY && mouse.entityHit is net.minecraft.entity.EntityLivingBase && mc.thePlayer.getDistanceToEntityBox(mouse.entityHit) <= grimRange) {
-                            entity = mouse.entityHit
-                        }
-
-                        if (entity == null && !raycast) {
-                            val target = KillAura.target
-                            if (target != null && mc.thePlayer.getDistanceToEntityBox(target) <= grimRange) {
-                                entity = KillAura.target
-                            }
-                        }
-
-                        if (entity != null) {
-                            attacked = true
-                            event.cancelEvent()
-                        }
-                    }
                 }
 
                 "prediction" -> {

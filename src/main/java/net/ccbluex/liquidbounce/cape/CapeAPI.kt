@@ -21,15 +21,27 @@ object CapeAPI : MinecraftInstance {
         mkdir()
     }
 
+    /**
+     * 获取自定义披风（从Cape模块）
+     * 每次调用都会重新获取，确保实时切换
+     */
+    fun getCustomCape(uuid: UUID): ResourceLocation? {
+        return Cape.getCapeForPlayer(uuid)
+    }
+
+    /**
+     * 加载在线披风（用于其他玩家的披风）
+     */
     fun loadCape(uuid: UUID, success: (CapeInfo) -> Unit) {
-        val capeTexture = Cape.getCapeForPlayer(uuid)
-        
-        if (capeTexture != null) {
-            val capeInfo = CapeInfo(capeTexture, true)
+        // 首先检查是否有自定义披风
+        val customCape = getCustomCape(uuid)
+        if (customCape != null) {
+            val capeInfo = CapeInfo(customCape, true)
             success(capeInfo)
             return
         }
 
+        // 如果没有自定义披风，尝试加载在线披风
         CapeService.refreshCapeCarriers {
             runCatching {
                 val (name, url) = CapeService.getCapeDownload(uuid) ?: return@refreshCapeCarriers

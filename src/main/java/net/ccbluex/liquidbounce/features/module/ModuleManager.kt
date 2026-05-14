@@ -14,6 +14,8 @@ import net.ccbluex.liquidbounce.features.module.modules.`fun`.FullDisabler
 import net.ccbluex.liquidbounce.features.module.modules.`fun`.SkinDerp
 import net.ccbluex.liquidbounce.features.module.modules.`fun`.SkyBlockPerformanceMode
 import net.ccbluex.liquidbounce.features.module.modules.`fun`.SnakeGame
+import net.ccbluex.liquidbounce.features.module.modules.`fun`.DrugHallucination
+import net.ccbluex.liquidbounce.features.module.modules.`fun`.Myopia
 import net.ccbluex.liquidbounce.features.module.modules.misc.*
 import net.ccbluex.liquidbounce.features.module.modules.movement.*
 import net.ccbluex.liquidbounce.features.module.modules.music.MusicPlayer
@@ -115,6 +117,7 @@ object ModuleManager : Listenable, Collection<Module> by MODULE_REGISTRY {
             Derp,
             ESP2D,
             ESP,
+            DamageESP,
             Eagle,
             FakeLag,
             FastBow,
@@ -264,6 +267,19 @@ object ModuleManager : Listenable, Collection<Module> by MODULE_REGISTRY {
             HitBubbles,
             JumpCircle,
             FireFlies,
+            Glint,
+            FollowTargetHud,
+            MotionBlur,
+            TargetStrafe,
+            DrugHallucination,
+            Myopia,
+            SmartBlink,
+            WorldReplace,
+            Star,
+            DeathAnimation,
+            BlockBreakFX,
+            BlockPlaceFX,
+            FireballTrajectory,
         )
 
         registerModules(modules = modules)

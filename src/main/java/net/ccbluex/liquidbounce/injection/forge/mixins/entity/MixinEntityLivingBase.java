@@ -7,6 +7,7 @@ package net.ccbluex.liquidbounce.injection.forge.mixins.entity;
 import net.ccbluex.liquidbounce.event.EventManager;
 import net.ccbluex.liquidbounce.event.EventState;
 import net.ccbluex.liquidbounce.event.JumpEvent;
+import net.ccbluex.liquidbounce.event.EntityDamageEvent;
 import net.ccbluex.liquidbounce.features.module.modules.movement.LiquidWalk;
 import net.ccbluex.liquidbounce.features.module.modules.movement.NoJumpDelay;
 import net.ccbluex.liquidbounce.features.module.modules.movement.Sprint;
@@ -176,5 +177,10 @@ public abstract class MixinEntityLivingBase extends MixinEntity {
         Animations module = Animations.INSTANCE;
 
         return module.handleEvents() ? (2 + (20 - module.getSwingSpeed())) : constant;
+    }
+
+    @Inject(method = "damageEntity", at = @At("RETURN"))
+    private void onDamageEntity(CallbackInfo ci) {
+        EventManager.INSTANCE.call(new EntityDamageEvent((EntityLivingBase) (Object) this));
     }
 }

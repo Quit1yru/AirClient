@@ -39,16 +39,16 @@ object HUD : MinecraftInstance {
         Target::class.java,
         OpaiTarget::class.java,
         Target3::class.java,
-        Target4::class.java,
         Radar::class.java,
         SpeedGraph::class.java,
         Cooldown::class.java,
         Taco::class.java,
         Keystrokes::class.java,
-        MusicLyric::class.java
+        MusicLyric::class.java,
+        Watermark::class.java
     )
 
-    val ELEMENTS = ALL_ELEMENT_CLASSES.associateWithTo(IdentityHashMap(ALL_ELEMENT_CLASSES.size)) {
+    val ELEMENTS: IdentityHashMap<Class<out Element>, ElementInfo?> = ALL_ELEMENT_CLASSES.associateWithTo(IdentityHashMap(ALL_ELEMENT_CLASSES.size)) {
         it.getAnnotation(ElementInfo::class.java)
     }
 

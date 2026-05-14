@@ -21,6 +21,7 @@ import net.minecraft.util.ResourceLocation
 import net.ccbluex.liquidbounce.ui.font.Fonts
 import net.minecraftforge.client.event.RenderGameOverlayEvent
 import net.minecraftforge.common.MinecraftForge
+import net.minecraftforge.fml.common.eventhandler.EventPriority
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import org.lwjgl.opengl.GL11
 import java.awt.Color
@@ -30,6 +31,14 @@ import kotlin.math.max
 import kotlin.math.min
 
 object HUD : Module("HUD", Category.RENDER, gameDetecting = false, defaultState = true, defaultHidden = true) {
+    init {
+        MinecraftForge.EVENT_BUS.register(this)
+    }
+
+    private fun lerp(start: Float, end: Float, percent: Float): Float {
+        return start + (end - start) * percent
+    }
+    
     val customHotbar by boolean("CustomHotbar", true)
 
     val smoothHotbarSlot by boolean("SmoothHotbarSlot", true) { customHotbar }
@@ -68,59 +77,51 @@ object HUD : Module("HUD", Category.RENDER, gameDetecting = false, defaultState 
     val chatRect by boolean("ChatRect", true) { chatAnimation }
 
     val customHealthBar by boolean("自定义血条", true)
-    val healthBarStyle by choices("血条样式", arrayOf(
-        "经典", "圆角", "渐变", "心形", "数字", "百分比",
-        "彩虹", "霓虹", "极简", "动态", "分段", "双色"
-    ), "经典") { customHealthBar }
-    val healthBarWidth by float("血条宽度", 100F, 50F..200F) { customHealthBar }
-    val healthBarHeight by float("血条高度", 10F, 5F..20F) { customHealthBar }
-    val healthBarOffsetX by float("血条X偏移", 0F, -500F..500F) { customHealthBar }
-    val healthBarOffsetY by float("血条Y偏移", 0F, -500F..500F) { customHealthBar }
+    val healthBarStyle by choices("血条样式", arrayOf("极简", "圆角", "动态", "原版"), "圆角") { customHealthBar }
+    val healthBarWidth by int("血条宽度", 90, 50..200) { customHealthBar }
+    val healthBarHeight by int("血条高度", 10, 5..20) { customHealthBar }
+    val healthBarOffsetX by int("血条X偏移", 0, -500..500) { customHealthBar }
+    val healthBarOffsetY by int("血条Y偏移", 0, -500..500) { customHealthBar }
     val healthColor1 by color("血条颜色1", Color(255, 50, 50)) { customHealthBar }
     val healthColor2 by color("血条颜色2", Color(255, 100, 100)) { customHealthBar && healthBarStyle == "渐变" }
     val healthBgColor by color("血条背景色", Color(50, 50, 50, 150)) { customHealthBar }
     val healthText by boolean("显示血量文字", true) { customHealthBar && healthBarStyle != "数字" && healthBarStyle != "百分比" }
-    val healthTextShadow by boolean("血量文字阴影", true) { customHealthBar && healthText }
-    val healthRoundedRadius by float("血条圆角", 3F, 0F..10F) { customHealthBar }
-    val healthBorderWidth by float("血条边框粗细", 1F, 0F..3F) { customHealthBar }
+    val healthTextShadow by boolean("血量文字阴影", false) { customHealthBar && healthText }
+    val healthTextOffsetX by int("血量文字X偏移", 0, -100..100) { customHealthBar && healthText }
+    val healthTextOffsetY by int("血量文字Y偏移", 1, -100..100) { customHealthBar && healthText }
+    val healthRoundedRadius by int("血条圆角", 3, 0..10) { customHealthBar }
+    val healthBorderWidth by int("血条边框粗细", 1, 0..3) { customHealthBar }
     val healthBorderColor by color("血条边框颜色", Color(0, 0, 0, 100)) { customHealthBar && healthBorderWidth > 0 }
-    val healthAnimationSpeed by float("血条动画速度", 2F, 0.5F..5F) { customHealthBar }
+    val healthAnimationSpeed by int("血条动画速度", 1, 1..5) { customHealthBar }
 
     val customFoodBar by boolean("自定义饥饿值", true)
-    val foodBarStyle by choices("饥饿值样式", arrayOf(
-        "经典", "圆角", "渐变", "数字", "百分比",
-        "彩虹", "霓虹", "极简", "分段", "图标"
-    ), "经典") { customFoodBar }
-    val foodBarWidth by float("饥饿值宽度", 100F, 50F..200F) { customFoodBar }
-    val foodBarHeight by float("饥饿值高度", 10F, 5F..20F) { customFoodBar }
-    val foodBarOffsetX by float("饥饿值X偏移", 0F, -500F..500F) { customFoodBar }
-    val foodBarOffsetY by float("饥饿值Y偏移", 0F, -500F..500F) { customFoodBar }
+    val foodBarStyle by choices("饥饿值样式", arrayOf("极简", "圆角", "动态", "原版"), "圆角") { customFoodBar }
+    val foodBarWidth by int("饥饿值宽度", 90, 50..200) { customFoodBar }
+    val foodBarHeight by int("饥饿值高度", 10, 5..20) { customFoodBar }
+    val foodBarOffsetX by int("饥饿值X偏移", 0, -500..500) { customFoodBar }
+    val foodBarOffsetY by int("饥饿值Y偏移", 0, -500..500) { customFoodBar }
     val foodColor1 by color("饥饿值颜色1", Color(139, 90, 43)) { customFoodBar }
     val foodColor2 by color("饥饿值颜色2", Color(194, 124, 57)) { customFoodBar && foodBarStyle == "渐变" }
     val foodBgColor by color("饥饿值背景色", Color(50, 50, 50, 150)) { customFoodBar }
     val foodText by boolean("显示饥饿值文字", true) { customFoodBar && foodBarStyle != "数字" && foodBarStyle != "百分比" }
-    val foodTextShadow by boolean("饥饿值文字阴影", true) { customFoodBar && foodText }
-    val foodRoundedRadius by float("饥饿值圆角", 3F, 0F..10F) { customFoodBar }
-    val foodBorderWidth by float("饥饿值边框粗细", 1F, 0F..3F) { customFoodBar }
+    val foodTextShadow by boolean("饥饿值文字阴影", false) { customFoodBar && foodText }
+    val foodTextOffsetX by int("饥饿值文字X偏移", 0, -100..100) { customFoodBar && foodText }
+    val foodTextOffsetY by int("饥饿值文字Y偏移", 1, -100..100) { customFoodBar && foodText }
+    val foodRoundedRadius by int("饥饿值圆角", 3, 0..10) { customFoodBar }
+    val foodBorderWidth by int("饥饿值边框粗细", 1, 0..3) { customFoodBar }
     val foodBorderColor by color("饥饿值边框颜色", Color(0, 0, 0, 100)) { customFoodBar && foodBorderWidth > 0 }
-    val foodAnimationSpeed by float("饥饿值动画速度", 2F, 0.5F..5F) { customFoodBar }
+    val foodAnimationSpeed by int("饥饿值动画速度", 1, 1..5) { customFoodBar }
 
     private var displayHealth = 0f
     private var lastHealth = 0f
     private var displayFood = 0f
     private var lastFood = 0
+    private var easingHealth = 0f
+    private var easingFood = 0f
 
     private val ICONS = ResourceLocation("textures/gui/icons.png")
 
-    override fun onEnable() {
-        MinecraftForge.EVENT_BUS.register(this)
-    }
-
-    override fun onDisable() {
-        MinecraftForge.EVENT_BUS.unregister(this)
-    }
-
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     fun onRenderGameOverlay(event: RenderGameOverlayEvent.Pre) {
         if (!handleEvents()) return
 
@@ -129,14 +130,25 @@ object HUD : Module("HUD", Category.RENDER, gameDetecting = false, defaultState 
         val width = resolution.scaledWidth
         val height = resolution.scaledHeight
 
-        if (event.type == RenderGameOverlayEvent.ElementType.HEALTH && customHealthBar) {
-            event.isCanceled = true
-            renderCustomHealthBar(player, width, height)
-        }
-
-        if (event.type == RenderGameOverlayEvent.ElementType.FOOD && customFoodBar) {
-            event.isCanceled = true
-            renderCustomFoodBar(player, width, height)
+        when (event.type) {
+            RenderGameOverlayEvent.ElementType.HEALTH -> {
+                if (customHealthBar) {
+                    event.isCanceled = true
+                    renderCustomHealthBar(player, width, height)
+                }
+            }
+            RenderGameOverlayEvent.ElementType.FOOD -> {
+                if (customFoodBar) {
+                    event.isCanceled = true
+                    renderCustomFoodBar(player, width, height)
+                }
+            }
+            RenderGameOverlayEvent.ElementType.AIR -> {
+                if (customHealthBar) {
+                    event.isCanceled = true
+                }
+            }
+            else -> {}
         }
     }
 
@@ -145,44 +157,39 @@ object HUD : Module("HUD", Category.RENDER, gameDetecting = false, defaultState 
         val maxHealth = player.maxHealth
         val absorption = player.absorptionAmount
 
-        if (abs(health - lastHealth) > 0.5f || displayHealth == 0f) {
-            displayHealth = health
-        } else {
-            displayHealth += (health - displayHealth) * healthAnimationSpeed * 0.1f
+        if (easingHealth < 0 || easingHealth > maxHealth || abs(easingHealth - health) > maxHealth * 0.5f) {
+            easingHealth = health
         }
+        easingHealth = lerp(easingHealth, health, healthAnimationSpeed * 0.1f)
+        displayHealth = easingHealth
         lastHealth = health
 
         val healthPercent = max(0f, min(1f, displayHealth / maxHealth))
-        val barX = width / 2f - 91f + healthBarOffsetX
-        val barY = height - 39f + healthBarOffsetY
-        val barWidth = healthBarWidth
-        val barHeight = healthBarHeight
+        val barX = width / 2f - 91f + healthBarOffsetX.toFloat()
+        val barY = height - 39f + healthBarOffsetY.toFloat()
+        val barWidth = healthBarWidth.toFloat()
+        val barHeight = healthBarHeight.toFloat()
         val style = healthBarStyle
         val color1 = healthColor1
         val color2 = healthColor2
         val bgColor = healthBgColor
-        val radius = healthRoundedRadius
-        val borderWidth = healthBorderWidth
+        val radius = healthRoundedRadius.toFloat()
+        val borderWidth = healthBorderWidth.toFloat()
         val borderColor = healthBorderColor
 
         GL11.glPushMatrix()
         GL11.glEnable(GL11.GL_BLEND)
+        GL11.glDisable(GL11.GL_TEXTURE_2D)
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
+        GL11.glShadeModel(GL11.GL_SMOOTH)
 
         val healthWidth = healthPercent * barWidth
 
         when (style) {
-            "经典" -> {
-                RenderUtils.drawRoundedRect(barX, barY, barX + barWidth, barY + barHeight, bgColor.rgb, radius, RenderUtils.RoundedCorners.ALL)
+            "极简" -> {
+                RenderUtils.drawRect(barX, barY, barX + barWidth, barY + 2, Color(50, 50, 50, 150).rgb)
                 if (healthWidth > 0) {
-                    RenderUtils.drawGradientRect(barX.toInt(), barY.toInt(), (barX + healthWidth).toInt(), (barY + barHeight).toInt(), color1.rgb, color2.rgb, 0f)
-                }
-                if (absorption > 0) {
-                    val absWidth = (absorption / maxHealth) * barWidth
-                    RenderUtils.drawRoundedRect(barX + healthWidth, barY, barX + healthWidth + absWidth, barY + barHeight, Color(255, 200, 50).rgb, radius, RenderUtils.RoundedCorners.ALL)
-                }
-                if (borderWidth > 0) {
-                    RenderUtils.drawRoundedBorder(barX, barY, barX + barWidth, barY + barHeight, borderWidth, borderColor.rgb, radius)
+                    RenderUtils.drawRect(barX, barY, barX + healthWidth, barY + 2, color1.rgb)
                 }
             }
             "圆角" -> {
@@ -192,96 +199,6 @@ object HUD : Module("HUD", Category.RENDER, gameDetecting = false, defaultState 
                 }
                 if (borderWidth > 0) {
                     RenderUtils.drawRoundedBorder(barX, barY, barX + barWidth, barY + barHeight, borderWidth, borderColor.rgb, radius)
-                }
-            }
-            "渐变" -> {
-                RenderUtils.drawRoundedRect(barX, barY, barX + barWidth, barY + barHeight, bgColor.rgb, radius, RenderUtils.RoundedCorners.ALL)
-                if (healthWidth > 0) {
-                    RenderUtils.drawGradientRect(barX.toInt(), barY.toInt(), (barX + healthWidth).toInt(), (barY + barHeight).toInt(), color1.rgb, color2.rgb, 0f)
-                }
-                if (borderWidth > 0) {
-                    RenderUtils.drawRoundedBorder(barX, barY, barX + barWidth, barY + barHeight, borderWidth, borderColor.rgb, radius)
-                }
-            }
-            "心形" -> {
-                mc.textureManager.bindTexture(ICONS)
-                GL11.glColor4f(1f, 1f, 1f, 1f)
-                val maxHearts = ceil(maxHealth / 2f).toInt()
-                val heartSize = 9
-                val spacing = 2
-
-                for (i in 0 until maxHearts) {
-                    val heartX = barX + i * (heartSize + spacing)
-                    val heartY = barY
-                    val healthForHeart = health - i * 2
-
-                    Gui.drawModalRectWithCustomSizedTexture(heartX.toInt(), heartY.toInt(), 16f, 0f, 9, 9, 256f, 256f)
-                    if (healthForHeart >= 2) {
-                        Gui.drawModalRectWithCustomSizedTexture(heartX.toInt(), heartY.toInt(), 52f, 0f, 9, 9, 256f, 256f)
-                    } else if (healthForHeart >= 1) {
-                        Gui.drawModalRectWithCustomSizedTexture(heartX.toInt(), heartY.toInt(), 61f, 0f, 9, 9, 256f, 256f)
-                    }
-                }
-            }
-            "数字" -> {
-                val healthTextStr = "${health.toInt()}/${maxHealth.toInt()}"
-                val absorptionText = if (absorption > 0) " +${absorption.toInt()}" else ""
-                val numColor = when {
-                    health <= maxHealth * 0.25 -> Color(255, 50, 50)
-                    health <= maxHealth * 0.5 -> Color(255, 200, 50)
-                    else -> Color(50, 255, 50)
-                }
-                Fonts.fontSemibold40.drawString(healthTextStr, barX, barY, numColor.rgb, healthTextShadow)
-                val offset = Fonts.fontSemibold40.getStringWidth(healthTextStr)
-                Fonts.fontSemibold40.drawString("/${maxHealth.toInt()}", barX + offset + 2, barY, Color.GRAY.rgb, healthTextShadow)
-                if (absorption > 0) {
-                    Fonts.fontSemibold40.drawString(absorptionText, barX + offset + Fonts.fontSemibold40.getStringWidth("/${maxHealth.toInt()}") + 4, barY, Color(255, 200, 50).rgb, healthTextShadow)
-                }
-            }
-            "百分比" -> {
-                val percentage = (healthPercent * 100).toInt()
-                val pctText = "$percentage%"
-                val pctColor = when {
-                    percentage <= 25 -> Color(255, 50, 50)
-                    percentage <= 50 -> Color(255, 200, 50)
-                    else -> Color(50, 255, 50)
-                }
-                Fonts.fontSemibold40.drawString(pctText, barX, barY, pctColor.rgb, healthTextShadow)
-            }
-            "彩虹" -> {
-                RenderUtils.drawRoundedRect(barX, barY, barX + barWidth, barY + barHeight, bgColor.rgb, radius, RenderUtils.RoundedCorners.ALL)
-                if (healthWidth > 0) {
-                    val rainbowSpeed = 3000f
-                    for (i in 0 until healthWidth.toInt()) {
-                        val hue = (System.currentTimeMillis() % rainbowSpeed.toInt()) / rainbowSpeed + i / 200f
-                        val rainbowColor = Color.getHSBColor(hue % 1f, 0.8f, 1f)
-                        RenderUtils.drawRect(barX + i, barY, barX + i + 1, barY + barHeight, rainbowColor.rgb)
-                    }
-                }
-                if (borderWidth > 0) {
-                    RenderUtils.drawRoundedBorder(barX, barY, barX + barWidth, barY + barHeight, borderWidth, borderColor.rgb, radius)
-                }
-            }
-            "霓虹" -> {
-                for (i in 3 downTo 1) {
-                    val alpha = 50 * i
-                    val glowColor = Color(color1.red, color1.green, color1.blue, alpha)
-                    RenderUtils.drawRoundedRect(barX - i, barY - i, barX + barWidth + i, barY + barHeight + i, glowColor.rgb, radius + i, RenderUtils.RoundedCorners.ALL)
-                }
-                RenderUtils.drawRoundedRect(barX, barY, barX + barWidth, barY + barHeight, bgColor.rgb, radius, RenderUtils.RoundedCorners.ALL)
-                if (healthWidth > 0) {
-                    for (i in 2 downTo 1) {
-                        val alpha = 100 * i
-                        val glowColor = Color(color1.red, color1.green, color1.blue, alpha)
-                        RenderUtils.drawRoundedRect(barX - i, barY - i, barX + healthWidth + i, barY + barHeight + i, glowColor.rgb, radius + i, RenderUtils.RoundedCorners.ALL)
-                    }
-                    RenderUtils.drawRoundedRect(barX, barY, barX + healthWidth, barY + barHeight, color1.rgb, radius, RenderUtils.RoundedCorners.ALL)
-                }
-            }
-            "极简" -> {
-                RenderUtils.drawRect(barX, barY, barX + barWidth, barY + 2, Color(50, 50, 50, 150).rgb)
-                if (healthWidth > 0) {
-                    RenderUtils.drawRect(barX, barY, barX + healthWidth, barY + 2, color1.rgb)
                 }
             }
             "动态" -> {
@@ -308,51 +225,40 @@ object HUD : Module("HUD", Category.RENDER, gameDetecting = false, defaultState 
                     RenderUtils.drawRoundedBorder(barX, barY, barX + barWidth, barY + barHeight, borderWidth, borderColor.rgb, radius)
                 }
             }
-            "分段" -> {
-                val segments = 10
-                val segmentWidth = barWidth / segments - 2
-                val healthPerSegment = maxHealth / segments
+            "原版" -> {
+                GL11.glEnable(GL11.GL_TEXTURE_2D)
+                mc.textureManager.bindTexture(ICONS)
+                GL11.glColor4f(1f, 1f, 1f, 1f)
+                val maxHearts = ceil(maxHealth / 2f).toInt()
+                val heartSize = 9
+                val spacing = 2
 
-                for (i in 0 until segments) {
-                    val segmentX = barX + i * (segmentWidth + 2)
-                    RenderUtils.drawRoundedRect(segmentX, barY, segmentX + segmentWidth, barY + barHeight, bgColor.rgb, radius, RenderUtils.RoundedCorners.ALL)
+                for (i in 0 until maxHearts) {
+                    val heartX = barX + i * (heartSize + spacing)
+                    val heartY = barY
+                    val healthForHeart = health - i * 2
 
-                    val segmentHealth = health - i * healthPerSegment
-                    if (segmentHealth > 0) {
-                        val fillPercent = min(1f, segmentHealth / healthPerSegment)
-                        val segColor = when {
-                            i < segments * 0.3 -> Color(50, 255, 50)
-                            i < segments * 0.6 -> Color(255, 200, 50)
-                            else -> Color(255, 50, 50)
-                        }
-                        RenderUtils.drawRoundedRect(segmentX, barY, segmentX + segmentWidth * fillPercent, barY + barHeight, segColor.rgb, radius, RenderUtils.RoundedCorners.ALL)
+                    Gui.drawModalRectWithCustomSizedTexture(heartX.toInt(), heartY.toInt(), 16f, 0f, 9, 9, 256f, 256f)
+                    if (healthForHeart >= 2) {
+                        Gui.drawModalRectWithCustomSizedTexture(heartX.toInt(), heartY.toInt(), 52f, 0f, 9, 9, 256f, 256f)
+                    } else if (healthForHeart >= 1) {
+                        Gui.drawModalRectWithCustomSizedTexture(heartX.toInt(), heartY.toInt(), 61f, 0f, 9, 9, 256f, 256f)
                     }
                 }
-            }
-            "双色" -> {
-                val halfWidth = barWidth / 2
-                RenderUtils.drawRoundedRect(barX, barY, barX + barWidth, barY + barHeight, bgColor.rgb, radius, RenderUtils.RoundedCorners.ALL)
-                if (healthWidth > 0) {
-                    if (healthWidth <= halfWidth) {
-                        RenderUtils.drawRoundedRect(barX, barY, barX + healthWidth, barY + barHeight, color1.rgb, radius, RenderUtils.RoundedCorners.ALL)
-                    } else {
-                        RenderUtils.drawRoundedRect(barX, barY, barX + halfWidth, barY + barHeight, color1.rgb, radius, RenderUtils.RoundedCorners.ALL)
-                        RenderUtils.drawRoundedRect(barX + halfWidth, barY, barX + healthWidth, barY + barHeight, color2.rgb, radius, RenderUtils.RoundedCorners.ALL)
-                    }
-                }
-                if (borderWidth > 0) {
-                    RenderUtils.drawRoundedBorder(barX, barY, barX + barWidth, barY + barHeight, borderWidth, borderColor.rgb, radius)
-                }
+                GL11.glDisable(GL11.GL_TEXTURE_2D)
             }
         }
 
-        if (healthText && style != "数字" && style != "百分比") {
+        if (healthText && style != "原版") {
+            GL11.glEnable(GL11.GL_TEXTURE_2D)
             val text = "${health.toInt()}/${maxHealth.toInt()}"
-            val textX = barX + barWidth / 2 - Fonts.fontRegular35.getStringWidth(text) / 2
-            val textY = barY + barHeight / 2 - Fonts.fontRegular35.FONT_HEIGHT / 2
+            val textX = barX + barWidth / 2 - Fonts.fontRegular35.getStringWidth(text) / 2 + healthTextOffsetX
+            val textY = barY + barHeight / 2 - Fonts.fontRegular35.FONT_HEIGHT / 2 + healthTextOffsetY
             Fonts.fontRegular35.drawString(text, textX, textY, Color.WHITE.rgb, healthTextShadow)
         }
 
+        GL11.glEnable(GL11.GL_TEXTURE_2D)
+        GL11.glShadeModel(GL11.GL_FLAT)
         GL11.glPopMatrix()
     }
 
@@ -360,40 +266,39 @@ object HUD : Module("HUD", Category.RENDER, gameDetecting = false, defaultState 
         val foodLevel = player.foodStats.foodLevel
         val maxFood = 20f
 
-        if (abs(foodLevel - lastFood) > 1 || displayFood == 0f) {
-            displayFood = foodLevel.toFloat()
-        } else {
-            displayFood += (foodLevel - displayFood) * foodAnimationSpeed * 0.1f
+        if (easingFood < 0 || easingFood > maxFood || abs(easingFood - foodLevel) > maxFood * 0.5f) {
+            easingFood = foodLevel.toFloat()
         }
+        easingFood = lerp(easingFood, foodLevel.toFloat(), foodAnimationSpeed * 0.1f)
+        displayFood = easingFood
         lastFood = foodLevel
 
         val foodPercent = max(0f, min(1f, displayFood / maxFood))
-        val barX = width / 2f + 91f - foodBarWidth + foodBarOffsetX
-        val barY = height - 39f + foodBarOffsetY
-        val barWidth = foodBarWidth
-        val barHeight = foodBarHeight
+        val barX = width / 2f + 91f - foodBarWidth + foodBarOffsetX.toFloat()
+        val barY = height - 39f + foodBarOffsetY.toFloat()
+        val barWidth = foodBarWidth.toFloat()
+        val barHeight = foodBarHeight.toFloat()
         val style = foodBarStyle
         val color1 = foodColor1
         val color2 = foodColor2
         val bgColor = foodBgColor
-        val radius = foodRoundedRadius
-        val borderWidth = foodBorderWidth
+        val radius = foodRoundedRadius.toFloat()
+        val borderWidth = foodBorderWidth.toFloat()
         val borderColor = foodBorderColor
 
         GL11.glPushMatrix()
         GL11.glEnable(GL11.GL_BLEND)
+        GL11.glDisable(GL11.GL_TEXTURE_2D)
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
+        GL11.glShadeModel(GL11.GL_SMOOTH)
 
         val foodWidth = foodPercent * barWidth
 
         when (style) {
-            "经典" -> {
-                RenderUtils.drawRoundedRect(barX, barY, barX + barWidth, barY + barHeight, bgColor.rgb, radius, RenderUtils.RoundedCorners.ALL)
+            "极简" -> {
+                RenderUtils.drawRect(barX, barY, barX + barWidth, barY + 2, Color(50, 50, 50, 150).rgb)
                 if (foodWidth > 0) {
-                    RenderUtils.drawGradientRect(barX.toInt(), barY.toInt(), (barX + foodWidth).toInt(), (barY + barHeight).toInt(), color1.rgb, color2.rgb, 0f)
-                }
-                if (borderWidth > 0) {
-                    RenderUtils.drawRoundedBorder(barX, barY, barX + barWidth, barY + barHeight, borderWidth, borderColor.rgb, radius)
+                    RenderUtils.drawRect(barX, barY, barX + foodWidth, barY + 2, color1.rgb)
                 }
             }
             "圆角" -> {
@@ -405,92 +310,32 @@ object HUD : Module("HUD", Category.RENDER, gameDetecting = false, defaultState 
                     RenderUtils.drawRoundedBorder(barX, barY, barX + barWidth, barY + barHeight, borderWidth, borderColor.rgb, radius)
                 }
             }
-            "渐变" -> {
+            "动态" -> {
+                val time = System.currentTimeMillis() % 2000 / 2000f
                 RenderUtils.drawRoundedRect(barX, barY, barX + barWidth, barY + barHeight, bgColor.rgb, radius, RenderUtils.RoundedCorners.ALL)
                 if (foodWidth > 0) {
-                    RenderUtils.drawGradientRect(barX.toInt(), barY.toInt(), (barX + foodWidth).toInt(), (barY + barHeight).toInt(), color1.rgb, color2.rgb, 0f)
-                }
-                if (borderWidth > 0) {
-                    RenderUtils.drawRoundedBorder(barX, barY, barX + barWidth, barY + barHeight, borderWidth, borderColor.rgb, radius)
-                }
-            }
-            "数字" -> {
-                val foodTextStr = "${displayFood.toInt()}/${maxFood.toInt()}"
-                val numColor = when {
-                    displayFood <= maxFood * 0.25 -> Color(255, 50, 50)
-                    displayFood <= maxFood * 0.5 -> Color(255, 200, 50)
-                    else -> color1
-                }
-                Fonts.fontSemibold40.drawString(foodTextStr, barX, barY, numColor.rgb, foodTextShadow)
-            }
-            "百分比" -> {
-                val percentage = (foodPercent * 100).toInt()
-                val pctText = "$percentage%"
-                val pctColor = when {
-                    percentage <= 25 -> Color(255, 50, 50)
-                    percentage <= 50 -> Color(255, 200, 50)
-                    else -> color1
-                }
-                Fonts.fontSemibold40.drawString(pctText, barX, barY, pctColor.rgb, foodTextShadow)
-            }
-            "彩虹" -> {
-                RenderUtils.drawRoundedRect(barX, barY, barX + barWidth, barY + barHeight, bgColor.rgb, radius, RenderUtils.RoundedCorners.ALL)
-                if (foodWidth > 0) {
-                    val rainbowSpeed = 3000f
-                    for (i in 0 until foodWidth.toInt()) {
-                        val hue = (System.currentTimeMillis() % rainbowSpeed.toInt()) / rainbowSpeed + i / 200f + 0.1f
-                        val rainbowColor = Color.getHSBColor(hue % 1f, 0.8f, 1f)
-                        RenderUtils.drawRect(barX + i, barY, barX + i + 1, barY + barHeight, rainbowColor.rgb)
-                    }
-                }
-                if (borderWidth > 0) {
-                    RenderUtils.drawRoundedBorder(barX, barY, barX + barWidth, barY + barHeight, borderWidth, borderColor.rgb, radius)
-                }
-            }
-            "霓虹" -> {
-                for (i in 3 downTo 1) {
-                    val alpha = 50 * i
-                    val glowColor = Color(color1.red, color1.green, color1.blue, alpha)
-                    RenderUtils.drawRoundedRect(barX - i, barY - i, barX + barWidth + i, barY + barHeight + i, glowColor.rgb, radius + i, RenderUtils.RoundedCorners.ALL)
-                }
-                RenderUtils.drawRoundedRect(barX, barY, barX + barWidth, barY + barHeight, bgColor.rgb, radius, RenderUtils.RoundedCorners.ALL)
-                if (foodWidth > 0) {
-                    for (i in 2 downTo 1) {
-                        val alpha = 100 * i
-                        val glowColor = Color(color1.red, color1.green, color1.blue, alpha)
-                        RenderUtils.drawRoundedRect(barX - i, barY - i, barX + foodWidth + i, barY + barHeight + i, glowColor.rgb, radius + i, RenderUtils.RoundedCorners.ALL)
-                    }
+                    val shimmerWidth = 30f
+                    val shimmerX = (time * (barWidth + shimmerWidth)) - shimmerWidth
+
                     RenderUtils.drawRoundedRect(barX, barY, barX + foodWidth, barY + barHeight, color1.rgb, radius, RenderUtils.RoundedCorners.ALL)
-                }
-            }
-            "极简" -> {
-                RenderUtils.drawRect(barX, barY, barX + barWidth, barY + 2, Color(50, 50, 50, 150).rgb)
-                if (foodWidth > 0) {
-                    RenderUtils.drawRect(barX, barY, barX + foodWidth, barY + 2, color1.rgb)
-                }
-            }
-            "分段" -> {
-                val segments = 10
-                val segmentWidth = barWidth / segments - 2
-                val foodPerSegment = maxFood / segments
 
-                for (i in 0 until segments) {
-                    val segmentX = barX + i * (segmentWidth + 2)
-                    RenderUtils.drawRoundedRect(segmentX, barY, segmentX + segmentWidth, barY + barHeight, bgColor.rgb, radius, RenderUtils.RoundedCorners.ALL)
-
-                    val segmentFood = displayFood - i * foodPerSegment
-                    if (segmentFood > 0) {
-                        val fillPercent = min(1f, segmentFood / foodPerSegment)
-                        val segColor = when {
-                            i < segments * 0.3 -> color1
-                            i < segments * 0.6 -> color2
-                            else -> Color(255, 150, 50)
-                        }
-                        RenderUtils.drawRoundedRect(segmentX, barY, segmentX + segmentWidth * fillPercent, barY + barHeight, segColor.rgb, radius, RenderUtils.RoundedCorners.ALL)
-                    }
+                    GL11.glColor4f(1f, 1f, 1f, 0.3f)
+                    RenderUtils.drawRoundedRect(
+                        barX + max(0f, min(shimmerX, foodWidth)),
+                        barY,
+                        min(barX + foodWidth, barX + shimmerX + shimmerWidth),
+                        barY + barHeight,
+                        Color.WHITE.rgb,
+                        radius,
+                        RenderUtils.RoundedCorners.ALL
+                    )
+                }
+                if (borderWidth > 0) {
+                    RenderUtils.drawRoundedBorder(barX, barY, barX + barWidth, barY + barHeight, borderWidth, borderColor.rgb, radius)
                 }
             }
-            "图标" -> {
+            "原版" -> {
+                GL11.glEnable(GL11.GL_TEXTURE_2D)
                 mc.textureManager.bindTexture(ICONS)
                 GL11.glColor4f(1f, 1f, 1f, 1f)
                 val iconCount = 10
@@ -511,16 +356,20 @@ object HUD : Module("HUD", Category.RENDER, gameDetecting = false, defaultState 
                         Gui.drawModalRectWithCustomSizedTexture(iconX.toInt(), barY.toInt(), 61f, 27f, 9, 9, 256f, 256f)
                     }
                 }
+                GL11.glDisable(GL11.GL_TEXTURE_2D)
             }
         }
 
-        if (foodText && style != "数字" && style != "百分比") {
+        if (foodText && style != "原版") {
+            GL11.glEnable(GL11.GL_TEXTURE_2D)
             val text = "${displayFood.toInt()}/${maxFood.toInt()}"
-            val textX = barX + barWidth / 2 - Fonts.fontRegular35.getStringWidth(text) / 2
-            val textY = barY + barHeight / 2 - Fonts.fontRegular35.FONT_HEIGHT / 2
+            val textX = barX + barWidth / 2 - Fonts.fontRegular35.getStringWidth(text) / 2 + foodTextOffsetX
+            val textY = barY + barHeight / 2 - Fonts.fontRegular35.FONT_HEIGHT / 2 + foodTextOffsetY
             Fonts.fontRegular35.drawString(text, textX, textY, Color.WHITE.rgb, foodTextShadow)
         }
 
+        GL11.glEnable(GL11.GL_TEXTURE_2D)
+        GL11.glShadeModel(GL11.GL_FLAT)
         GL11.glPopMatrix()
     }
 

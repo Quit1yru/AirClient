@@ -199,6 +199,10 @@ object Scaffold : Module("Scaffold", Category.WORLD, Keyboard.KEY_I) {
 
     // Visuals
     private val mark by boolean("Mark", false).subjective()
+    private val markRed by int("Mark-R", 68, 0..255) { mark }
+    private val markGreen by int("Mark-G", 117, 0..255) { mark }
+    private val markBlue by int("Mark-B", 255, 0..255) { mark }
+    private val markAlpha by int("Mark-Alpha", 100, 0..255) { mark }
     private val trackCPS by boolean("TrackCPS", false).subjective()
 
     // Target placement
@@ -841,7 +845,7 @@ object Scaffold : Module("Scaffold", Category.WORLD, Keyboard.KEY_I) {
             val placeInfo = PlaceInfo.get(blockPos)
 
             if (blockPos.isReplaceable && placeInfo != null) {
-                RenderUtils.drawBlockBox(blockPos, Color(68, 117, 255, 100), false)
+                RenderUtils.drawBlockBox(blockPos, Color(markRed, markGreen, markBlue, markAlpha), false)
                 return@handler
             }
         }

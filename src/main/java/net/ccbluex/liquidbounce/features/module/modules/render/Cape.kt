@@ -30,6 +30,8 @@ object Cape : Module("Cape", Category.RENDER) {
     private var initialized = false
 
     private var capeModeValue: ListValue? = null
+    private var currentCape: ResourceLocation? = null
+    private var lastCapeMode: String = "None"
 
     val capeMode: String
         get() = capeModeValue?.get() ?: "None"
@@ -52,12 +54,57 @@ object Cape : Module("Cape", Category.RENDER) {
             
             capeModeValue = choices("Cape", capeNames.toTypedArray(), capeNames.first())
             
-            ClientUtils.LOGGER.info("[Cape] Initialization complete. Found ${capeFiles.size} capes")
+            // 注册onChanged监听器
+            capeModeValue?.onChanged { newValue ->
+                ClientUtils.LOGGER.info("[Cape] onChanged triggered: $newValue")
+                lastCapeMode = newValue
+                updateCurrentCape(newValue)
+            }
+            
+            // 初始化当前披风
+            lastCapeMode = capeMode
+            updateCurrentCape(capeMode)
+            
+            ClientUtils.LOGGER.info("[Cape] Initialization complete. Found ${capeFiles.size} capes, current: ${capeMode}")
             initialized = true
         } catch (e: Exception) {
             ClientUtils.LOGGER.error("[Cape] Initialization failed: ${e.message}")
             e.printStackTrace()
             capeModeValue = choices("Cape", arrayOf("None"), "None")
+        }
+    }
+
+    private fun updateCurrentCape(selectedCape: String) {
+        ClientUtils.LOGGER.info("[Cape] updateCurrentCape called with: $selectedCape")
+        
+        if (selectedCape == "None") {
+            currentCape = null
+            ClientUtils.LOGGER.info("[Cape] Cape disabled")
+            return
+        }
+        
+        // 检查缓存
+        if (capeMap.containsKey(selectedCape)) {
+            currentCape = capeMap[selectedCape]
+            ClientUtils.LOGGER.info("[Cape] Using cached cape: $selectedCape -> $currentCape")
+            return
+        }
+        
+        // 加载新披风
+        val file = capeFiles.find { it.nameWithoutExtension == selectedCape }
+        if (file != null) {
+            val texture = loadCapeTexture(file)
+            if (texture != null) {
+                capeMap[selectedCape] = texture
+                currentCape = texture
+                ClientUtils.LOGGER.info("[Cape] Loaded and cached cape: $selectedCape -> $texture")
+            } else {
+                currentCape = null
+                ClientUtils.LOGGER.error("[Cape] Failed to load cape: $selectedCape")
+            }
+        } else {
+            currentCape = null
+            ClientUtils.LOGGER.error("[Cape] Cape file not found: $selectedCape")
         }
     }
 
@@ -205,51 +252,21 @@ object Cape : Module("Cape", Category.RENDER) {
     }
 
     fun getCapeForPlayer(uuid: UUID): ResourceLocation? {
-        if (!state) {
-            ClientUtils.LOGGER.debug("[Cape] Module not enabled")
-            return null
+        if (!state) return null
+        
+        val currentPlayer = mc.thePlayer ?: return null
+        
+        if (uuid != currentPlayer.uniqueID) return null
+        
+        // 检查是否需要更新（实时切换支持）
+        val currentMode = capeMode
+        if (currentMode != lastCapeMode) {
+            ClientUtils.LOGGER.info("[Cape] Detected mode change: $lastCapeMode -> $currentMode")
+            lastCapeMode = currentMode
+            updateCurrentCape(currentMode)
         }
         
-        val currentPlayer = mc.thePlayer
-        if (currentPlayer == null) {
-            ClientUtils.LOGGER.debug("[Cape] No current player")
-            return null
-        }
-        
-        if (uuid != currentPlayer.uniqueID) {
-            ClientUtils.LOGGER.debug("[Cape] UUID mismatch: $uuid != ${currentPlayer.uniqueID}")
-            return null
-        }
-        
-        val selectedCape = capeMode
-        ClientUtils.LOGGER.debug("[Cape] Selected cape: $selectedCape")
-        
-        if (selectedCape == "None") {
-            ClientUtils.LOGGER.debug("[Cape] No cape selected")
-            return null
-        }
-        
-        if (capeMap.containsKey(selectedCape)) {
-            ClientUtils.LOGGER.debug("[Cape] Returning cached texture for: $selectedCape")
-            return capeMap[selectedCape]
-        }
-        
-        ClientUtils.LOGGER.info("[Cape] Loading texture for: $selectedCape")
-        val file = capeFiles.find { it.nameWithoutExtension == selectedCape }
-        if (file != null) {
-            val texture = loadCapeTexture(file)
-            if (texture != null) {
-                capeMap[selectedCape] = texture
-                ClientUtils.LOGGER.info("[Cape] Successfully loaded and cached texture for: $selectedCape")
-                return texture
-            } else {
-                ClientUtils.LOGGER.error("[Cape] Failed to load texture for: $selectedCape")
-            }
-        } else {
-            ClientUtils.LOGGER.error("[Cape] Cape file not found for: $selectedCape")
-        }
-        
-        return null
+        return currentCape
     }
 
     override val tag
@@ -259,6 +276,7 @@ object Cape : Module("Cape", Category.RENDER) {
         ClientUtils.LOGGER.info("[Cape] Refreshing capes...")
         initialized = false
         capeMap.clear()
+        currentCape = null
         initializeCapes()
         
         capeModeValue?.let { value ->

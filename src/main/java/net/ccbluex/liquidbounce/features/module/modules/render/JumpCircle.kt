@@ -44,7 +44,7 @@ object JumpCircle : Module("JumpCircle", Category.RENDER, gameDetecting = false)
     private val lifeTime by int("LifeTime", 20, 1..50, "Ticks")
     private val blackHole by boolean("BlackHole", false)
     private val useTexture by boolean("UseTexture", true)
-    private val texture by choices("Texture", arrayOf("Supernatural", "Aurora", "Leeches", "Circle"), "Leeches") { useTexture }
+    private val texture by choices("Texture", arrayOf("Supernatural", "Aurora", "Leeches", "Circle"), "Supernatural") { useTexture }
     private val deepestLight by boolean("Deepest Light", true) { useTexture }
 
     private val staticLoc = ResourceLocation("${CLIENT_NAME.lowercase()}/textures/jumpcircle/default")

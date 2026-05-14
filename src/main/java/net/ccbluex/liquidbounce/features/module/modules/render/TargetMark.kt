@@ -54,10 +54,6 @@ object TargetMark : Module("TargetMark", Category.RENDER) {
             "Creeper" -> ResourceLocation("airclient/targetimage/creeper.png")
             else -> ResourceLocation("airclient/targetimage/target.png")
         }
-        glPushMatrix()
-        glColor4f(color.red / 255f, color.green / 255f, color.blue / 255f, color.alpha / 255f)
         RenderUtils.drawImage(texture, -16, -16, 32, 32, color)
-        RenderUtils.drawImage(texture, -16, -16, 32, 32)
-        glPopMatrix()
     }
 }

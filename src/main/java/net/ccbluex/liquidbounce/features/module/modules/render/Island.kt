@@ -90,6 +90,7 @@ object Island : Module("Island", Category.RENDER) {
 
     private val breakProgressCheck by boolean("BreakProgress", true)
     private val breakProgressTheme by color("BreakProgressTheme", Color(225, 150, 65))
+    private val breakProgressOnlyFuckerNuker by boolean("OnlyFuckerAndNuker", true) { breakProgressCheck }
     
     private val showGappleProgress by boolean("GappleProgress", true)
     private val gappleProgressTheme by color("GappleProgressTheme", Color(255, 215, 0))
@@ -104,24 +105,28 @@ object Island : Module("Island", Category.RENDER) {
     private val versionNameDown = clientVersionText
 
     private val showLyricOnIsland by boolean("ShowLyric", true)
-    private val lyricDisplayMode by choices("LyricMode", arrayOf("None", "Below", "Inside", "Float"), "None") { showLyricOnIsland }
+    private val lyricDisplayMode by choices("LyricMode", arrayOf("None", "Below", "Inside", "Float", "Full"), "None") { showLyricOnIsland }
     private val lyricHeight by int("LyricHeight", 40, 20..80) { showLyricOnIsland && lyricDisplayMode != "None" }
-    private val lyricFloatOffsetY by int("LyricFloatOffsetY", 20, 0..200) { showLyricOnIsland && lyricDisplayMode == "Float" }
-    private val lyricShowMusicName by boolean("LyricShowMusicName", true) { showLyricOnIsland && lyricDisplayMode != "None" }
-    private val lyricShowPrevious by boolean("LyricShowPrevious", true) { showLyricOnIsland && (lyricDisplayMode == "Below" || lyricDisplayMode == "Float") }
-    private val lyricShowNext by boolean("LyricShowNext", true) { showLyricOnIsland && (lyricDisplayMode == "Below" || lyricDisplayMode == "Float") }
+    private val lyricFloatOffsetY by int("LyricFloatOffsetY", 20, 0..200) { showLyricOnIsland && (lyricDisplayMode == "Float" || lyricDisplayMode == "Full") }
+    private val lyricShowMusicName by boolean("LyricShowMusicName", true) { showLyricOnIsland && lyricDisplayMode != "None" && lyricDisplayMode != "Full" }
+    private val lyricShowPrevious by boolean("LyricShowPrevious", true) { showLyricOnIsland && lyricDisplayMode == "Below" }
+    private val lyricShowNext by boolean("LyricShowNext", true) { showLyricOnIsland && lyricDisplayMode == "Below" }
     private val lyricMusicNameFont by choices("LyricMusicNameFont", arrayOf("ExtraBold35", "ExtraBold40", "Semibold35", "Semibold40", "Regular30", "Regular35", "Regular40", "Regular45", "Bold180"), "Semibold35") { showLyricOnIsland && lyricDisplayMode != "None" }
     private val lyricTextFont by choices("LyricTextFont", arrayOf("ExtraBold35", "ExtraBold40", "Semibold35", "Semibold40", "Regular30", "Regular35", "Regular40", "Regular45", "Bold180"), "Regular35") { showLyricOnIsland && lyricDisplayMode != "None" }
     private val lyricColorMode by choices("LyricColorMode", arrayOf("Custom", "Theme"), "Theme") { showLyricOnIsland && lyricDisplayMode != "None" }
     private val lyricGradientMode by choices("LyricGradientMode", arrayOf("Sync", "LeftToRight", "RightToLeft"), "Sync") { showLyricOnIsland && lyricDisplayMode != "None" && lyricColorMode == "Theme" }
     private val lyricCustomColor by color("LyricCustomColor", Color(255, 255, 255)) { showLyricOnIsland && lyricDisplayMode != "None" && lyricColorMode == "Custom" }
-    private val lyricBackgroundAlpha by int("LyricBackgroundAlpha", 160, 0..255) { showLyricOnIsland && (lyricDisplayMode == "Below" || lyricDisplayMode == "Float") }
+    private val lyricBackgroundAlpha by int("LyricBackgroundAlpha", 160, 0..255) { showLyricOnIsland && (lyricDisplayMode == "Below" || lyricDisplayMode == "Float" || lyricDisplayMode == "Full") }
     private val lyricTextAlpha by int("LyricTextAlpha", 0, 0..255) { showLyricOnIsland && lyricDisplayMode != "None" }
-    private val lyricBlur by boolean("LyricBlur", true) { showLyricOnIsland && (lyricDisplayMode == "Below" || lyricDisplayMode == "Float") }
+    private val lyricBlur by boolean("LyricBlur", true) { showLyricOnIsland && (lyricDisplayMode == "Below" || lyricDisplayMode == "Float" || lyricDisplayMode == "Full") }
     private val lyricBounce by boolean("LyricBounce", true) { showLyricOnIsland && lyricDisplayMode != "None" }
     private val lyricScrollAnimation by boolean("LyricScrollAnimation", true) { showLyricOnIsland && (lyricDisplayMode == "Below" || lyricDisplayMode == "Float") }
     private val lyricScrollAnimTime by int("LyricScrollAnimTime", 300, 100..1000) { showLyricOnIsland && lyricScrollAnimation && (lyricDisplayMode == "Below" || lyricDisplayMode == "Float") }
-    private val lyricShowProgress by boolean("LyricShowProgress", true) { showLyricOnIsland && (lyricDisplayMode == "Below" || lyricDisplayMode == "Float") }
+    private val lyricShowProgress by boolean("LyricShowProgress", true) { showLyricOnIsland && (lyricDisplayMode == "Below" || lyricDisplayMode == "Float" || lyricDisplayMode == "Full") }
+    private val lyricFullWidth by int("LyricFullWidth", 300, 100..500) { showLyricOnIsland && lyricDisplayMode == "Full" }
+    private val lyricFullHeight by int("LyricFullHeight", 50, 30..150) { showLyricOnIsland && lyricDisplayMode == "Full" }
+    private val lyricFullAnimation by choices("LyricFullAnimation", arrayOf("None", "Fade", "SlideLeft", "SlideRight", "SlideUp", "SlideDown", "Scale", "Typewriter"), "Fade") { showLyricOnIsland && lyricDisplayMode == "Full" }
+    private val lyricFullAnimTime by int("LyricFullAnimTime", 300, 100..1000) { showLyricOnIsland && lyricDisplayMode == "Full" && lyricFullAnimation != "None" }
 
     private var breakProgressTarget = 0F
     private var animatedBreakProgress = 0F
@@ -218,6 +223,13 @@ object Island : Module("Island", Category.RENDER) {
         } catch (e: Exception) {
             return Pair(null, null)
         }
+    }
+
+    private fun shouldShowBreakProgress(): Boolean {
+        if (!breakProgressOnlyFuckerNuker) return true
+        val fucker = ModuleManager.getModule("Fucker") ?: return false
+        val nuker = ModuleManager.getModule("Nuker") ?: return false
+        return fucker.state || nuker.state
     }
 
     val onUpdate = handler<UpdateEvent> {
@@ -376,7 +388,16 @@ object Island : Module("Island", Category.RENDER) {
         var headerLines: List<String> = emptyList()
         var footerLines: List<String> = emptyList()
 
-        if (chestSlots.isNotEmpty()) {
+        if (showLyricOnIsland && lyricDisplayMode == "Full" && MusicPlayer.currentLyricDisplay.isNotEmpty()) {
+            renderMode = "LYRIC_FULL"
+            val textFont = getLyricTextFont()
+            val currentLyric = MusicPlayer.currentLyricDisplay
+            val textWidth = textFont.getStringWidth(currentLyric).toFloat()
+            targetWidth = (textWidth + 40F).coerceIn(100F, lyricFullWidth.toFloat())
+            targetHeight = if (lyricShowProgress) 50F else 35F
+            targetX = (width - targetWidth) / 2
+            targetY = lyricFloatOffsetY.toFloat()
+        } else if (chestSlots.isNotEmpty()) {
             renderMode = "CHEST"
             val columns = 9
             val rows = (chestSlots.size + 8) / 9
@@ -457,7 +478,7 @@ object Island : Module("Island", Category.RENDER) {
             targetWidth = borderInfo.coerceAtLeast(180F)
             targetHeight = (notifications.size * ITEM_NOTIFY_HEIGHT).toFloat()
             targetX = (width - targetWidth) / 2
-        } else if (breakProgressCheck && animatedBreakProgress > 0.01f) {
+        } else if (breakProgressCheck && animatedBreakProgress > 0.01f && shouldShowBreakProgress()) {
             renderMode = "BREAK_PROGRESS"
             targetWidth = 190F
             targetHeight = 58F
@@ -548,6 +569,7 @@ object Island : Module("Island", Category.RENDER) {
             }
 
             when (renderMode) {
+                "LYRIC_FULL" -> renderLyricFullContent(drawX, drawY, drawW, drawH)
                 "SCAFFOLD" -> renderScaffoldContent(drawX, drawY, drawW, drawH)
                 "NOTIFY_STACK" -> renderNotificationStack(drawX, drawY, drawW, drawH)
                 "NORMAL_OPAI" -> renderNormal3Content(drawX, drawY, drawW, drawH)
@@ -1242,6 +1264,8 @@ object Island : Module("Island", Category.RENDER) {
     }
 
     private fun renderLyricDisplay() {
+        if (lyricDisplayMode == "Full") return
+        
         val isPlaying = MusicPlayer.isCurrentlyPlaying
         val currentLyric = MusicPlayer.currentLyricDisplay
         val currentMusicName = MusicPlayer.currentMusicName
@@ -1268,6 +1292,7 @@ object Island : Module("Island", Category.RENDER) {
         when (lyricDisplayMode) {
             "Below" -> renderLyricBelow()
             "Float" -> renderLyricFloat()
+            "Full" -> renderLyricFull()
         }
     }
 
@@ -1504,6 +1529,279 @@ object Island : Module("Island", Category.RENDER) {
 
         drawRoundedRect(bubbleX, bubbleY, bubbleX + animBubbleWidth, bubbleY + animBubbleHeight, 
                        Color(0, 0, 0, alpha).rgb, 8F)
+        
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+        val themeColor = ClientThemesUtils.getColor()
+        val useGradient = lyricColorMode == "Theme" && lyricGradientMode != "Sync"
+        val (gradientX, gradientY) = when {
+            !useGradient -> 0f to 0f
+            lyricGradientMode == "LeftToRight" -> 0.002f to 0f
+            else -> -0.002f to 0f
+        }
+        val gradientOffset = System.currentTimeMillis() % 10000 / 10000F
+        val gradientSpeed = ClientThemesUtils.ThemeFadeSpeed / 5f
+        val gradientColors = if (useGradient) {
+            val startColor = ClientThemesUtils.setColor("start", 255)
+            val endColor = ClientThemesUtils.setColor("end", 255)
+            if (lyricGradientMode == "LeftToRight") {
+                listOf(
+                    floatArrayOf(startColor.red / 255f, startColor.green / 255f, startColor.blue / 255f, 1f),
+                    floatArrayOf(endColor.red / 255f, endColor.green / 255f, endColor.blue / 255f, 1f)
+                )
+            } else {
+                listOf(
+                    floatArrayOf(endColor.red / 255f, endColor.green / 255f, endColor.blue / 255f, 1f),
+                    floatArrayOf(startColor.red / 255f, startColor.green / 255f, startColor.blue / 255f, 1f)
+                )
+            }
+        } else null
+        
+        if (lyricScrollAnimation) {
+            val currentFullText = displayLines.joinToString("|") { it.first }
+            if (currentFullText != lastLyricText) {
+                lastLyricText = currentFullText
+                scrollAnimProgress = 18F
+                velScrollAnim = 0F
+            }
+            if (scrollAnimProgress > 0.01F) {
+                val animSpeed = 300F / lyricScrollAnimTime
+                val (nextScroll, vS) = spring(scrollAnimProgress, 0F, velScrollAnim * animSpeed)
+                scrollAnimProgress = nextScroll.coerceIn(0F, 50F)
+                velScrollAnim = vS
+            }
+        }
+        
+        GradientFontShader.begin(useGradient, gradientX, gradientY, gradientColors ?: emptyList(), gradientSpeed, gradientOffset).use {
+            var textY = bubbleY + 8F
+            displayLines.forEachIndexed { index, (line, isMusic) ->
+                val font = if (isMusic) musicFont else textFont
+                val textWidth = font.getStringWidth(line)
+                val textX = bubbleX + (animBubbleWidth - textWidth) / 2
+                val currentLyricIndex = displayLines.indexOfFirst { it.first == currentLyric }
+                val lineAlpha = if (index == currentLyricIndex || (currentLyricIndex == -1 && index == displayLines.size - 1)) {
+                    (lyricTextAlpha * animBubbleAlpha).toInt()
+                } else {
+                    (lyricTextAlpha * 0.6 * animBubbleAlpha).toInt()
+                }
+                val colorToUse = when {
+                    useGradient -> 0
+                    lyricColorMode == "Theme" -> Color(themeColor.red, themeColor.green, themeColor.blue, lineAlpha).rgb
+                    else -> Color(lyricCustomColor.red, lyricCustomColor.green, lyricCustomColor.blue, lineAlpha).rgb
+                }
+                val actualY = if (isMusic) textY else textY - scrollAnimProgress
+                font.drawString(line, textX, actualY, colorToUse)
+                textY += 18F
+            }
+        }
+        
+        if (lyricShowProgress) {
+            val progress = MusicPlayer.progress.coerceIn(0F, 1F)
+            val timeStr = MusicPlayer.timeDisplayString
+            val barHeight = 4F
+            val barY = bubbleY + animBubbleHeight - barHeight - 4F
+            val barPadding = 8F
+            val timeWidth = Fonts.fontRegular30.getStringWidth(timeStr)
+            val timeX = bubbleX + barPadding
+            val barStartX = timeX + timeWidth + 6F
+            val maxBarWidth = animBubbleWidth - barPadding * 2 - timeWidth - 6F
+            
+            Fonts.fontRegular30.drawString(timeStr, timeX, barY - 1F, 
+                Color(180, 180, 190, (lyricTextAlpha * animBubbleAlpha).toInt()).rgb)
+            
+            drawRoundedRect(barStartX, barY, barStartX + maxBarWidth, barY + barHeight, 
+                Color(60, 60, 70, (180 * animBubbleAlpha).toInt()).rgb, 2F)
+            
+            val progressColor = when {
+                lyricColorMode == "Custom" -> Color(lyricCustomColor.red, lyricCustomColor.green, lyricCustomColor.blue, (lyricTextAlpha * animBubbleAlpha).toInt())
+                else -> Color(themeColor.red, themeColor.green, themeColor.blue, (lyricTextAlpha * animBubbleAlpha).toInt())
+            }
+            drawRoundedRect(barStartX, barY, barStartX + maxBarWidth * progress, barY + barHeight, 
+                progressColor.rgb, 2F)
+        }
+    }
+
+    private var lastFullLyricText = ""
+    private var fullLyricAnimStartTime = 0L
+    private var fullLyricAnimProgress = 0F
+
+    private fun renderLyricFullContent(x: Float, y: Float, w: Float, h: Float) {
+        val currentLyric = MusicPlayer.currentLyricDisplay ?: ""
+        val textFont = getLyricTextFont() ?: return
+        val themeColor = ClientThemesUtils.getColor() ?: return
+        
+        if (currentLyric.isEmpty()) return
+        
+        if (currentLyric != lastFullLyricText) {
+            lastFullLyricText = currentLyric
+            fullLyricAnimStartTime = System.currentTimeMillis()
+            fullLyricAnimProgress = 0F
+        }
+        
+        val animDuration = lyricFullAnimTime.toFloat()
+        val elapsed = (System.currentTimeMillis() - fullLyricAnimStartTime).toFloat()
+        fullLyricAnimProgress = (elapsed / animDuration).coerceIn(0F, 1F)
+        
+        val textWidth = textFont.getStringWidth(currentLyric)
+        val textX = x + (w - textWidth) / 2
+        val textY = y + (h - textFont.height) / 2 - if (lyricShowProgress) 8F else 0F
+        
+        val colorToUse = when (lyricColorMode) {
+            "Theme" -> Color(themeColor.red, themeColor.green, themeColor.blue, 255)
+            else -> Color(lyricCustomColor.red, lyricCustomColor.green, lyricCustomColor.blue, 255)
+        }
+        
+        glPushMatrix()
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        
+        when (lyricFullAnimation) {
+            "None" -> {
+                textFont.drawString(currentLyric, textX, textY, colorToUse.rgb)
+            }
+            "Fade" -> {
+                val alpha = (fullLyricAnimProgress * 255).toInt()
+                val fadeColor = Color(colorToUse.red, colorToUse.green, colorToUse.blue, alpha)
+                textFont.drawString(currentLyric, textX, textY, fadeColor.rgb)
+            }
+            "SlideLeft" -> {
+                val offsetX = (1F - fullLyricAnimProgress) * w * 0.3F
+                textFont.drawString(currentLyric, textX - offsetX, textY, colorToUse.rgb)
+            }
+            "SlideRight" -> {
+                val offsetX = (1F - fullLyricAnimProgress) * w * 0.3F
+                textFont.drawString(currentLyric, textX + offsetX, textY, colorToUse.rgb)
+            }
+            "SlideUp" -> {
+                val offsetY = (1F - fullLyricAnimProgress) * h * 0.5F
+                textFont.drawString(currentLyric, textX, textY + offsetY, colorToUse.rgb)
+            }
+            "SlideDown" -> {
+                val offsetY = (1F - fullLyricAnimProgress) * h * 0.5F
+                textFont.drawString(currentLyric, textX, textY - offsetY, colorToUse.rgb)
+            }
+            "Scale" -> {
+                val scale = 0.5F + fullLyricAnimProgress * 0.5F
+                glTranslatef(textX + textWidth / 2, textY + textFont.height / 2, 0F)
+                glScalef(scale, scale, 1F)
+                glTranslatef(-(textX + textWidth / 2), -(textY + textFont.height / 2), 0F)
+                val alpha = (fullLyricAnimProgress * 255).toInt()
+                val scaleColor = Color(colorToUse.red, colorToUse.green, colorToUse.blue, alpha)
+                textFont.drawString(currentLyric, textX, textY, scaleColor.rgb)
+            }
+            "Typewriter" -> {
+                val visibleChars = (fullLyricAnimProgress * currentLyric.length).toInt().coerceIn(0, currentLyric.length)
+                val displayText = currentLyric.substring(0, visibleChars)
+                textFont.drawString(displayText, textX, textY, colorToUse.rgb)
+            }
+            else -> {
+                textFont.drawString(currentLyric, textX, textY, colorToUse.rgb)
+            }
+        }
+        
+        glPopMatrix()
+        
+        if (lyricShowProgress) {
+            val progress = MusicPlayer.progress.coerceIn(0F, 1F)
+            val timeStr = MusicPlayer.timeDisplayString ?: "0:00 / 0:00"
+            val barHeight = 4F
+            val barY = y + h - barHeight - 8F
+            val barPadding = 8F
+            val fontRegular30 = Fonts.fontRegular30 ?: return
+            val timeWidth = fontRegular30.getStringWidth(timeStr)
+            val timeX = x + barPadding
+            val barStartX = timeX + timeWidth + 6F
+            val maxBarWidth = w - barPadding * 2 - timeWidth - 6F
+            
+            fontRegular30.drawString(timeStr, timeX, barY - 1F, 
+                Color(180, 180, 190, 200).rgb)
+            
+            drawRoundedRect(barStartX, barY, barStartX + maxBarWidth, barY + barHeight, 
+                Color(60, 60, 70, 180).rgb, 2F)
+            
+            val progressColor = when (lyricColorMode) {
+                "Custom" -> Color(lyricCustomColor.red, lyricCustomColor.green, lyricCustomColor.blue, 200)
+                else -> Color(themeColor.red, themeColor.green, themeColor.blue, 200)
+            }
+            drawRoundedRect(barStartX, barY, barStartX + maxBarWidth * progress, barY + barHeight, 
+                progressColor.rgb, 2F)
+        }
+    }
+
+    private fun renderLyricFull() {
+        val currentLyric = MusicPlayer.currentLyricDisplay ?: ""
+        val previousLyric = MusicPlayer.previousLyricDisplay ?: ""
+        val nextLyric = MusicPlayer.nextLyricDisplay ?: ""
+        val currentMusicName = MusicPlayer.currentMusicName ?: "None"
+        val musicFont = getMusicNameFont() ?: return
+        val textFont = getLyricTextFont() ?: return
+        
+        val displayLines = mutableListOf<Pair<String, Boolean>>()
+        if (lyricShowMusicName && currentMusicName != "None") {
+            displayLines.add("♪$currentMusicName" to true)
+        }
+        if (lyricShowPrevious && previousLyric.isNotEmpty()) {
+            displayLines.add(previousLyric to false)
+        }
+        if (currentLyric.isNotEmpty()) {
+            displayLines.add(currentLyric to false)
+        }
+        if (lyricShowNext && nextLyric.isNotEmpty()) {
+            displayLines.add(nextLyric to false)
+        }
+        
+        if (displayLines.isEmpty()) return
+
+        val maxWidth = displayLines.maxOf { (line, isMusic) -> 
+            (if (isMusic) musicFont else textFont).getStringWidth(line) + 40F 
+        }.coerceIn(100F, lyricFullWidth.toFloat())
+        
+        val lineCount = displayLines.size
+        val targetHeight = (lineCount * 18F + 16F + if (lyricShowProgress) 10F else 0F).coerceIn(30F, lyricFullHeight.toFloat())
+
+        if (lyricBounce) {
+            val (nextW, vW) = spring(animBubbleWidth, maxWidth, velBubbleWidth)
+            animBubbleWidth = nextW.coerceIn(0F, 500F)
+            velBubbleWidth = vW
+            val (nextH, vH) = spring(animBubbleHeight, targetHeight, velBubbleHeight)
+            animBubbleHeight = nextH.coerceIn(0F, 200F)
+            velBubbleHeight = vH
+            val (nextY, vY) = spring(animBubbleY, lyricFloatOffsetY.toFloat(), velBubbleY)
+            animBubbleY = nextY
+            velBubbleY = vY
+            val (nextAlpha, vA) = spring(animBubbleAlpha, 1F, velBubbleAlpha)
+            animBubbleAlpha = nextAlpha.coerceIn(0F, 1F)
+            velBubbleAlpha = vA
+        } else {
+            animBubbleWidth = maxWidth
+            animBubbleHeight = targetHeight
+            animBubbleY = lyricFloatOffsetY.toFloat()
+            animBubbleAlpha = 1F
+        }
+
+        if (animBubbleAlpha < 0.01f || animBubbleWidth < 10f || animBubbleHeight < 10f) return
+
+        val bubbleX = (width - animBubbleWidth) / 2
+        val bubbleY = animBubbleY
+        val alpha = (lyricBackgroundAlpha * animBubbleAlpha).toInt()
+
+        if (lyricBlur && blurCheck) {
+            try {
+                EmbeddedStencil.checkSetupFBO(mc.framebuffer)
+                EmbeddedStencil.write(false)
+                drawRoundedRect(bubbleX, bubbleY, bubbleX + animBubbleWidth, bubbleY + animBubbleHeight, Color.WHITE.rgb, 14F)
+                EmbeddedStencil.erase(true)
+                GlStateManager.pushMatrix()
+                InternalBlurShader.blurArea(bubbleX, bubbleY, animBubbleWidth, animBubbleHeight, blurRadius)
+                GlStateManager.popMatrix()
+                EmbeddedStencil.dispose()
+            } catch (e: Exception) {
+            }
+        }
+
+        drawRoundedRect(bubbleX, bubbleY, bubbleX + animBubbleWidth, bubbleY + animBubbleHeight, 
+                       Color(0, 0, 0, alpha).rgb, 14F)
         
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)

@@ -1,8 +1,8 @@
 [
   {
-    "modid": "D1ckBounce",
-    "name": "D1ckBounce",
-    "description": "super D1ckBounce Client",
+    "modid": "Air Client",
+    "name": "Air Client",
+    "description": "Air Hack Client",
     "version": "${version}",
     "mcversion": "1.8.9",
     "url": "https://liquidbounce.net",

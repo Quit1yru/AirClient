@@ -36,10 +36,14 @@ object Sound : Module("Sound", Category.CLIENT, canBeEnabled = false) {
         "Startup",
         getMP3S("assets/minecraft/airclient/sounds/Startup").toTypedArray().takeIf { it.isNotEmpty() }
             ?: arrayOf("None"),
-        getMP3S("assets/minecraft/airclient/sounds/Startup").firstOrNull() ?: "None"
+        getMP3S("assets/minecraft/airclient/sounds/Startup").firstOrNull() ?: "Air"
     )
 
     val killSoundEnabled by boolean("KillSound", true)
+    
+    val killCooldown by int("KillCooldown", 1, 0..60) { killSoundEnabled }
+    
+    private var lastKillSoundTime = 0L
     
     val killSounds by choices(
         "Kill",
@@ -74,6 +78,13 @@ object Sound : Module("Sound", Category.CLIENT, canBeEnabled = false) {
     fun playKillSound() {
         if (!killSoundEnabled) return
         if (killSounds == "None") return
+        
+        val currentTime = System.currentTimeMillis()
+        if (killCooldown > 0 && currentTime - lastKillSoundTime < killCooldown * 1000L) {
+            return
+        }
+        lastKillSoundTime = currentTime
+        
         val wavPath = "airclient/sounds/Kill/${killSounds}.wav"
         val mp3Path = "airclient/sounds/Kill/${killSounds}.mp3"
         

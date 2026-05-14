@@ -40,7 +40,7 @@ object GlowUtils {
         drawY -= blurRadius
         val texW = if (drawW.toInt() > 0) drawW.toInt() else 1
         val texH = if (drawH.toInt() > 0) drawH.toInt() else 1
-        val key = "${texW}x${texH}_r${blurRadius}_c${color.rgb}"
+        val key = "${texW}x${texH}_r${blurRadius}"
         GL11.glPushMatrix()
         GlStateManager.pushMatrix()
         GlStateManager.alphaFunc(GL11.GL_GREATER, 0.01f)
@@ -55,7 +55,7 @@ object GlowUtils {
             val g = original.graphics
             val innerW = width.toInt().coerceAtLeast(1)
             val innerH = height.toInt().coerceAtLeast(1)
-            g.color = color
+            g.color = Color.WHITE
             g.fillRect(blurRadius, blurRadius, innerW, innerH)
             g.dispose()
             val op = GaussianFilter(blurRadius.toFloat())
@@ -79,7 +79,7 @@ object GlowUtils {
             texId.let { GlStateManager.bindTexture(it) }
         }
         texId.let { GlStateManager.bindTexture(it) }
-        GL11.glColor4f(1f, 1f, 1f, 1f)
+        GL11.glColor4f(color.red / 255f, color.green / 255f, color.blue / 255f, color.alpha / 255f)
         val alignedX = drawX - 0.25f
         val alignedY = drawY + 0.25f
         GL11.glBegin(GL11.GL_QUADS)

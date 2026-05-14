@@ -17,6 +17,7 @@ import java.awt.Color
 object Gapple : Module("Gapple", Category.PLAYER) {
     private val c by int("C03PacketPlayer", 32, 32..40)
     private val progressBar2 by boolean("ProgressBar", true)
+    private val chatMessage by boolean("ChatMessage", true)
 
     private var x = 0.0
     private var y = 0.0
@@ -49,13 +50,13 @@ object Gapple : Module("Gapple", Category.PLAYER) {
         
         slot = getGApple()
         if (slot < 0) {
-            chat("§c没有苹果了！")
+            if (chatMessage) chat("§c没有苹果了！")
             state = false
             return
         }
         
         isEating = true
-        chat("§a开始吃金苹果")
+        if (chatMessage) chat("§a开始吃金苹果")
     }
 
     override fun onDisable() {
@@ -88,7 +89,7 @@ object Gapple : Module("Gapple", Category.PLAYER) {
         slot = getGApple()
         
         if (slot < 0) {
-            chat("§c没有苹果了！")
+            if (chatMessage) chat("§c没有苹果了！")
             state = false
             return@handler
         }
@@ -111,7 +112,7 @@ object Gapple : Module("Gapple", Category.PLAYER) {
             pauseTicks++
             ticks = 0
 
-            if (mc.thePlayer.ticksExisted % 20 == 0) {
+            if (mc.thePlayer.ticksExisted % 20 == 0 && chatMessage) {
                 chat("§6正在吃金苹果...")
             }
         }

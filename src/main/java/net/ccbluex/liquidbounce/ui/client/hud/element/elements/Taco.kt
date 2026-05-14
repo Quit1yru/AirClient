@@ -14,9 +14,6 @@ import net.ccbluex.liquidbounce.utils.render.RenderUtils.deltaTime
 import net.minecraft.client.gui.ScaledResolution
 import net.minecraft.util.ResourceLocation
 
-/**
- * TACO TACO TACO!!
- */
 @ElementInfo(name = "Taco", priority = 1)
 class Taco(x: Double = 2.0, y: Double = 441.0) : Element("Taco", x = x, y = y) {
 
@@ -24,10 +21,15 @@ class Taco(x: Double = 2.0, y: Double = 441.0) : Element("Taco", x = x, y = y) {
     private val animationSpeed by float("animationSpeed", 0.15f, 0.01f..1.0f)
 
     private var lastFrameTime = System.currentTimeMillis()
-    private var image = 0
-    private var running = 0f
+    private var currentFrame = 0
+    private var positionX = 0f
 
-    private val tacoTextures = Array(12) { i -> ResourceLocation("airclient/taco/${i + 1}.png") }
+    private val textures = arrayOf(
+        ResourceLocation("airclient/taco/1.png"),
+        ResourceLocation("airclient/taco/2.png"),
+        ResourceLocation("airclient/taco/3.png"),
+        ResourceLocation("airclient/taco/4.png")
+    )
 
     override fun drawElement(): Border {
         val player = mc.thePlayer ?: return Border(0F, 0F, 0F, 0F)
@@ -36,27 +38,21 @@ class Taco(x: Double = 2.0, y: Double = 441.0) : Element("Taco", x = x, y = y) {
             return Border(0F, 0F, 0F, 0F)
 
         val currentTime = System.currentTimeMillis()
-        val elapsedTime = currentTime - lastFrameTime
-
-        if (elapsedTime >= frameSpeed) {
-            updateAnimation()
+        if (currentTime - lastFrameTime >= frameSpeed) {
+            currentFrame = (currentFrame + 1) % textures.size
             lastFrameTime = currentTime
         }
 
         val scaledScreen = ScaledResolution(mc)
-
-        running += animationSpeed * deltaTime
-        RenderUtils.drawImage(tacoTextures[image], running.toInt(), 0, 64, 32)
-
-        if (running > scaledScreen.scaledWidth) {
-            running = -scaledScreen.scaledWidth / 4F
+        
+        positionX += animationSpeed * deltaTime
+        
+        if (positionX > scaledScreen.scaledWidth) {
+            positionX = -64f
         }
 
-        return Border(0F, 0F, 64F, 32F)
-    }
+        RenderUtils.drawImage(textures[currentFrame], positionX.toInt(), 0, 64, 64)
 
-    private fun updateAnimation() {
-        image = (image + 1) % tacoTextures.size
+        return Border(0F, 0F, 64F, 64F)
     }
-
 }

@@ -441,17 +441,17 @@
 
         "module.newGUI.description": "LB+的cgui",
 
-        "module.cape.description": "自定义披风样式",
+        "module.cape.description": "自定义披风",
 
         "module.dashTrail.description": "移动时显示炫酷的轨迹效果",
 
-        "module.eSP2D.description": "在屏幕上显示2D透视ESP",
+        "module.eSP2D.description": "2D的ESP",
 
         "module.island.description": "好看的灵动岛",
 
         "module.bAHalo.description": "ba光环效果",
 
-        "module.chatPrefix.description": "客户端前缀",
+        "module.chatPrefix.description": "聊天栏的客户端名称",
 
         "module.gapple.description": "自动金苹果",
 
@@ -471,7 +471,7 @@
 
         "module.packetLogHUD.description": "显示数据包统计",
 
-        "module.targetMark.description": "显示目标标记",
+        "module.targetMark.description": "标记目标",
 
         "module.riseNameTags.description": "rise的名称标签",
 
@@ -493,7 +493,33 @@
 
         "module.serverInfo.description": "显示服务器信息",
 
-        "module.scaffold2.description": "自动搭路"
+        "module.scaffold2.description": "自动搭路",
+
+        "module.glint.description": "修改附魔光效",
+
+        "module.followTargetHud.description":"渲染跟随目标的HUD",
+
+        "module.damageESP.description":"标记敌人受到伤害的位置",
+
+        "module.damageParticle.description":"显示伤害数字",
+
+        "module.smartBlink.description":"智能Blink模块，在接近目标时自动停止发包",
+
+        "module.worldReplace.description":"替换世界渲染效果，隐藏所有方块并修改天空颜色",
+
+        "module.star.description":"在天空中渲染闪烁的星星效果",
+
+        "module.deathAnimation.description":"自定义实体死亡动画效果",
+
+        "module.blockBreakFX.description":"方块破坏时的粒子特效",
+
+        "module.blockPlaceFX.description":"方块放置时的光波扩散特效",
+
+        "module.myopia.description":"爸爸，我好像近视了。",
+
+        "module.fireballTrajectory.description":"预测烈焰弹的爆炸范围",
+
+        "module.drugHallucination.description":"爸爸，这玩意带劲。"
 
     }
 }

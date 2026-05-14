@@ -39,6 +39,7 @@
     "gui.MixinGuiNewChat",
     "gui.MixinGuiOptionSlider",
     "gui.MixinGuiScreen",
+    "gui.MixinGuiScreenInputFix",
     "gui.MixinGuiScreenOptionsSoundsButton",
     "gui.MixinGuiSlider",
     "gui.MixinGuiSlot",
@@ -58,6 +59,7 @@
     "render.MixinModelBiped",
     "render.MixinRender",
     "render.MixinRenderEntityItem",
+    "render.MixinRenderItem",
     "render.MixinRendererLivingEntity",
     "render.MixinRenderManager",
     "render.MixinRenderPlayer",
@@ -80,6 +82,7 @@
     "gui.MixinGuiTextField",
     "render.MixinItemRenderer",
     "render.MixinRenderGlobal",
+    "render.MixinEntityRendererWorldReplace",
     "tweaks.MixinEntityFX"
   ]
 }

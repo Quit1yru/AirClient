@@ -239,6 +239,9 @@ object LiquidBounce {
             // Disable Optifine FastRender
             disableFastRender()
 
+            // Initialize InputFix
+            net.ccbluex.liquidbounce.utils.inputfix.InputFixInit.init()
+
             // Setup Discord RPC
             if (showRPCValue) {
                 SharedScopes.IO.launch {

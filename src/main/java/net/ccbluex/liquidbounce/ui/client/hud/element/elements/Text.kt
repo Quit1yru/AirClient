@@ -201,6 +201,34 @@ class Text(x: Double = 10.0, y: Double = 10.0, scale: Float = 1F, side: Side = S
     private val outlineGlowLayers by int("OutlineGlowLayers", 2, 1..5) { outlineGlow }
     private val outlineGlowRadius by float("OutlineGlowRadius", 5F, 0F..20F) { outlineGlow }
 
+    private val enableAnimation by boolean("EnableAnimation", true)
+    private val animationType by choices("AnimationType", arrayOf("Fade", "Scale", "Slide", "Bounce", "Elastic", "Zoom"), "Bounce") { enableAnimation }
+    private val animationSpeed by float("AnimationSpeed", 0.15F, 0.01F..0.5F) { enableAnimation }
+    private val bounceTension by float("BounceTension", 0.08f, 0.01f..0.5f) { enableAnimation && animationType == "Bounce" }
+    private val bounceFriction by float("BounceFriction", 0.2f, 0.01f..0.5f) { enableAnimation && animationType == "Bounce" }
+
+    private var animAlpha = 1F
+    private var animScale = 1F
+    private var animSlideX = 0F
+    private var animSlideY = 0F
+    
+    private var velAlpha = 0f
+    private var velScale = 0f
+    private var velSlideX = 0f
+    private var velSlideY = 0f
+
+    private var lastShouldRender = false
+
+    private fun spring(current: Float, target: Float, velocity: Float, tension: Float = bounceTension, friction: Float = bounceFriction): Pair<Float, Float> {
+        val displacement = target - current
+        val force = displacement * tension
+        val drag = velocity * friction
+        val acceleration = force - drag
+        val newVelocity = velocity + acceleration
+        val newPosition = current + newVelocity
+        return newPosition to newVelocity
+    }
+
     private var editMode = false
     private var editTicks = 0
     private var prevClick = 0L
@@ -312,6 +340,62 @@ class Text(x: Double = 10.0, y: Double = 10.0, scale: Float = 1F, side: Side = S
     override fun drawElement(): Border {
         val stack = mc.thePlayer?.inventory?.getStackInSlot(SilentHotbar.currentSlot)
         val shouldRender = showBlock && stack?.item is ItemBlock
+        
+        val isCurrentlyRendering = (Scaffold.handleEvents() && onScaffold) || !onScaffold || mc.currentScreen is GuiHudDesigner
+        
+        if (enableAnimation) {
+            val targetAlpha = if (isCurrentlyRendering) 1F else 0F
+            val targetScale = if (isCurrentlyRendering) 1F else 0F
+            
+            when (animationType) {
+                "Fade" -> {
+                    animAlpha = net.ccbluex.liquidbounce.utils.render.animation.AnimationUtil.base(animAlpha.toDouble(), targetAlpha.toDouble(), animationSpeed.toDouble()).toFloat()
+                    animScale = 1F
+                }
+                "Scale" -> {
+                    animScale = net.ccbluex.liquidbounce.utils.render.animation.AnimationUtil.base(animScale.toDouble(), targetScale.toDouble(), animationSpeed.toDouble()).toFloat()
+                    animAlpha = 1F
+                }
+                "Slide" -> {
+                    animSlideX = net.ccbluex.liquidbounce.utils.render.animation.AnimationUtil.base(animSlideX.toDouble(), (if (isCurrentlyRendering) 0F else -50F).toDouble(), animationSpeed.toDouble()).toFloat()
+                    animAlpha = net.ccbluex.liquidbounce.utils.render.animation.AnimationUtil.base(animAlpha.toDouble(), targetAlpha.toDouble(), animationSpeed.toDouble()).toFloat()
+                    animScale = 1F
+                }
+                "Bounce" -> {
+                    val (nextAlpha, vA) = spring(animAlpha, targetAlpha, velAlpha)
+                    animAlpha = nextAlpha.coerceIn(0F, 1F)
+                    velAlpha = vA
+                    
+                    val (nextScale, vS) = spring(animScale, targetScale, velScale)
+                    animScale = nextScale.coerceIn(0F, 1.5F)
+                    velScale = vS
+                }
+                "Elastic" -> {
+                    val progress = if (isCurrentlyRendering) {
+                        net.ccbluex.liquidbounce.utils.render.animation.AnimationUtil.easeOutElasticX(animAlpha.toDouble())
+                    } else {
+                        1.0 - net.ccbluex.liquidbounce.utils.render.animation.AnimationUtil.easeOutElasticX((1.0 - animAlpha))
+                    }
+                    animAlpha = net.ccbluex.liquidbounce.utils.render.animation.AnimationUtil.base(animAlpha.toDouble(), targetAlpha.toDouble(), animationSpeed.toDouble()).toFloat()
+                    animScale = progress.toFloat().coerceIn(0F, 1.5F)
+                }
+                "Zoom" -> {
+                    animScale = net.ccbluex.liquidbounce.utils.render.animation.AnimationUtil.base(animScale.toDouble(), targetScale.toDouble(), animationSpeed.toDouble() * 1.5).toFloat()
+                    animAlpha = net.ccbluex.liquidbounce.utils.render.animation.AnimationUtil.base(animAlpha.toDouble(), targetAlpha.toDouble(), animationSpeed.toDouble()).toFloat()
+                }
+            }
+            
+            if (!isCurrentlyRendering && animAlpha < 0.01f && animScale < 0.01f) {
+                return Border(0F, 0F, 0F, 0F)
+            }
+        } else {
+            animAlpha = 1F
+            animScale = 1F
+            animSlideX = 0F
+        }
+        
+        lastShouldRender = isCurrentlyRendering
+        
         val blockScale = if (shouldRender) 2.5F else 1F
         val fontRenderer = font.get()
         val fontHeight = ((fontRenderer as? GameFontRenderer)?.height ?: fontRenderer.FONT_HEIGHT) + 2
@@ -337,7 +421,20 @@ class Text(x: Double = 10.0, y: Double = 10.0, scale: Float = 1F, side: Side = S
         )
 
         assumeNonVolatile {
-            if ((Scaffold.handleEvents() && onScaffold) || !onScaffold || mc.currentScreen is GuiHudDesigner) {
+            if (isCurrentlyRendering) {
+                glPushMatrix()
+                
+                if (enableAnimation) {
+                    val centerX = (rectPos[0] + rectPos[2]) / 2F
+                    val centerY = (rectPos[1] + rectPos[3]) / 2F
+                    
+                    glTranslatef(centerX, centerY, 0F)
+                    glScalef(animScale, animScale, animScale)
+                    glTranslatef(-centerX, -centerY, 0F)
+                    
+                    glTranslatef(animSlideX, 0F, 0F)
+                }
+                
                 val rainbow = textColorMode == "Rainbow"
                 val gradient = textColorMode == "Gradient"
 
@@ -530,6 +627,8 @@ class Text(x: Double = 10.0, y: Double = 10.0, scale: Float = 1F, side: Side = S
                         }
                     }
                 }
+                
+                glPopMatrix()
             }
 
             if (editMode && mc.currentScreen !is GuiHudDesigner) {

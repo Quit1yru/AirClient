@@ -187,6 +187,7 @@ object KillAura : Module("KillAura", Category.COMBAT, Keyboard.KEY_R) {
     // BlockOnNoHit settings
     private val blockOnNoHitMode by choices("BlockOnNoHitMode", arrayOf("Packet", "RightClick"), "Packet") { autoBlock == "BlockOnNoHit" }
     private val cancelAttackWhenBlocking by boolean("CancelAttackWhenBlocking", true) { autoBlock == "BlockOnNoHit" }
+    private val blockOnNoHitDelay by int("BlockOnNoHitDelay", 1, 0..20) { autoBlock == "BlockOnNoHit" }
 
     // Ignore all blocking conditions, except for block rate, when standing still
     private val forceBlock by boolean("ForceBlockWhenStill", true) { smartAutoBlock }
@@ -398,6 +399,7 @@ object KillAura : Module("KillAura", Category.COMBAT, Keyboard.KEY_R) {
     var renderBlocking = false
     var blockStatus = false
     private var blockStopInDead = false
+    private var blockOnNoHitDelayTick = 0
 
     // Switch Delay
     private val switchTimer = MSTimer()
@@ -536,18 +538,22 @@ object KillAura : Module("KillAura", Category.COMBAT, Keyboard.KEY_R) {
             if (autoBlock == "BlockOnNoHit") {
                 val player = mc.thePlayer
                 if (player != null && player.heldItem?.item is ItemSword && !blockStatus) {
-                    when (blockOnNoHitMode) {
-                        "Packet" -> {
-                            sendPacket(C08PacketPlayerBlockPlacement(player.heldItem))
-                            blockStatus = true
-                            renderBlocking = true
+                    if (blockOnNoHitDelayTick >= blockOnNoHitDelay) {
+                        when (blockOnNoHitMode) {
+                            "Packet" -> {
+                                sendPacket(C08PacketPlayerBlockPlacement(player.heldItem))
+                                blockStatus = true
+                                renderBlocking = true
+                            }
+                            "RightClick" -> {
+                                mc.rightClickDelayTimer = 0
+                                mc.gameSettings.keyBindUseItem.pressed = true
+                                blockStatus = true
+                                renderBlocking = true
+                            }
                         }
-                        "RightClick" -> {
-                            mc.rightClickDelayTimer = 0
-                            mc.gameSettings.keyBindUseItem.pressed = true
-                            blockStatus = true
-                            renderBlocking = true
-                        }
+                    } else {
+                        blockOnNoHitDelayTick++
                     }
                 }
             } else {
@@ -590,18 +596,22 @@ object KillAura : Module("KillAura", Category.COMBAT, Keyboard.KEY_R) {
                     renderBlocking = true
                 }
                 if (autoBlock == "BlockOnNoHit" && !blockStatus && player.heldItem?.item is ItemSword) {
-                    when (blockOnNoHitMode) {
-                        "Packet" -> {
-                            sendPacket(C08PacketPlayerBlockPlacement(player.heldItem))
-                            blockStatus = true
-                            renderBlocking = true
+                    if (blockOnNoHitDelayTick >= blockOnNoHitDelay) {
+                        when (blockOnNoHitMode) {
+                            "Packet" -> {
+                                sendPacket(C08PacketPlayerBlockPlacement(player.heldItem))
+                                blockStatus = true
+                                renderBlocking = true
+                            }
+                            "RightClick" -> {
+                                mc.rightClickDelayTimer = 0
+                                mc.gameSettings.keyBindUseItem.pressed = true
+                                blockStatus = true
+                                renderBlocking = true
+                            }
                         }
-                        "RightClick" -> {
-                            mc.rightClickDelayTimer = 0
-                            mc.gameSettings.keyBindUseItem.pressed = true
-                            blockStatus = true
-                            renderBlocking = true
-                        }
+                    } else {
+                        blockOnNoHitDelayTick++
                     }
                 }
             }
@@ -989,6 +999,10 @@ object KillAura : Module("KillAura", Category.COMBAT, Keyboard.KEY_R) {
                 } else if (shouldSendPacket) {
                     sendPacket(C0APacketAnimation())
                 }
+            }
+            
+            if (autoBlock == "BlockOnNoHit") {
+                blockOnNoHitDelayTick = 0
             }
 
             // Apply enchantment critical effect if FakeSharp is enabled

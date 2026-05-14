@@ -31,7 +31,7 @@ object MVPDisplay : Module("MVPDisplay", Category.RENDER, gameDetecting = false)
 
     private val victoryKeywords = listOf(
         "win", "victory", "胜", "赢", "winner", "champion", "冠军",
-        "first place", "第一名", "you won", "胜利", "mvp", "best",
+        "first place", "第一名", "you won", "胜利", "best",
          "获胜", "triumph", "恭喜", "well played"
     )
 

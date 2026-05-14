@@ -209,22 +209,21 @@ public class NewUi extends GuiScreen {
         boolean isSearchTyping = searchElement.isTyping();
         boolean isSearchModuleTyping = searchElement.isAnyModuleTyping(categoryElements);
         boolean isSearchKeybindListening = searchElement.isAnyKeybindListening(categoryElements);
+        boolean isCategoryKeybindListening = ce.isAnyKeybindListening();
         
-        if (hasSearchContent || isSearchTyping || isSearchModuleTyping || isSearchKeybindListening) {
-            if (!searchElement.handleTyping(typedChar, keyCode, searchX, panelY + 45, searchW, searchH, categoryElements)) {
-                try {
-                    super.keyTyped(typedChar, keyCode);
-                } catch (Exception ignored) {
-                }
-            }
+        if (hasSearchContent || isSearchTyping || isSearchModuleTyping) {
+            searchElement.handleTyping(typedChar, keyCode, searchX, panelY + 45, searchW, searchH, categoryElements);
+        } else if (isCategoryKeybindListening) {
+            ce.handleKeyTyped(typedChar, keyCode);
+        } else if (isSearchKeybindListening) {
+            searchElement.handleTyping(typedChar, keyCode, searchX, panelY + 45, searchW, searchH, categoryElements);
         } else {
-            boolean hasModuleTyping = ce.isAnyModuleTyping();
-            if (!ce.handleKeyTyped(typedChar, keyCode)) {
-                try {
-                    super.keyTyped(typedChar, keyCode);
-                } catch (Exception ignored) {
-                }
-            }
+            ce.handleKeyTyped(typedChar, keyCode);
+        }
+        
+        try {
+            super.keyTyped(typedChar, keyCode);
+        } catch (Exception ignored) {
         }
     }
 
