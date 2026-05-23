@@ -2,6 +2,7 @@ name: Build
 
 on:
   push:
+  workflow_dispatch: 
     branches: [main, master, legacy]
   pull_request:
     branches: [main, master, legacy]
